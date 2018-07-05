@@ -1,0 +1,12 @@
+Django
+ipython
+remote-pdb
+requests
+powerline-status
+celery
+django-celery-results
+flower
+psycopg2-binary
+python-dateutil
+numpy
+pandas

@@ -1,0 +1,11 @@
+celerybeat.pid
+celerybeat-schedule
+local_settings.py
+*.pyc
+*.pyo
+*~
+.idea/
+__pycache__
+venv/ 
+*log
+static_files/
