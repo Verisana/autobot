@@ -10,6 +10,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
+    'info_data.apps.InfoDataConfig',
     'btcbot.apps.BtcbotConfig',
     'profiles.apps.ProfilesConfig',
     'django.contrib.admin',

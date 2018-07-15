@@ -19,13 +19,14 @@ class ProfileAdmin(UserAdmin):
 
 
 class APIKeyAdmin(admin.ModelAdmin):
-    fields = ['name', 'api_key', 'api_secret', 'username']
-    list_display = ['name', 'username', 'api_key', 'api_secret', 'created_at']
+    # Include all fields except id and created_at
+    fields = [field.name for field in APIKey._meta.fields if field.name != 'id' and field.name != 'created_at']
+    list_display = [field.name for field in APIKey._meta.fields if field.name != 'id']
 
 
 class APIKeyQiwiAdmin(admin.ModelAdmin):
-    fields = ['name', 'api_key', 'username']
-    list_display = ['name', 'username', 'api_key', 'created_at']
+    fields = [field.name for field in APIKeyQiwi._meta.fields if field.name != 'id' and field.name != 'created_at']
+    list_display = [field.name for field in APIKeyQiwi._meta.fields if field.name != 'id']
 
 
 admin.site.register(APIKey, APIKeyAdmin)

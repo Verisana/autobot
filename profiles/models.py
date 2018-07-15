@@ -13,7 +13,6 @@ class APIKey(models.Model):
     api_secret = models.CharField(max_length=64)
     username = models.ForeignKey('Profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-
     def __str__(self):
         text = '%s' % (self.name)
         return text
@@ -24,7 +23,7 @@ class APIKeyQiwi(models.Model):
     api_key = models.CharField(max_length=32)
     username = models.ForeignKey('Profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    phone_number = models.CharField(max_length=11)
     def __str__(self):
         text = '%s' % (self.name)
         return text
