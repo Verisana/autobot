@@ -1,3 +1,4 @@
+proxy_list.pickle
 celerybeat.pid
 celerybeat-schedule
 local_settings.py
