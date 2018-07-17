@@ -17,9 +17,12 @@ class LocalBitcoin:
 
 #    Public endpoints
 
-    def get_public_ads(self, trade_direction, payment_method, page_number):
-        return requests.get(self.baseurl + '/' + trade_direction + '/' + 'rub/' + payment_method \
-                            + '/.json?page=' + page_number)
+    def get_public_ads(self, trade_direction, payment_method, page_number, proxy=None):
+        url = self.baseurl + '/' + trade_direction + '/' + 'rub/' + payment_method + '/.json?page=' + page_number
+        if proxy == None:
+            return requests.get(url)
+        else:
+            return requests.get(url, proxies={'http': proxy, 'https': proxy}, timeout=5)
 
 #    Returns public user profile information
     def get_account_info(self, username):
