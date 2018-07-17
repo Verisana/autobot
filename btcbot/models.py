@@ -3,10 +3,7 @@ from django.db import models
 
 class BotSetting(models.Model):
     name = models.CharField(max_length=64, unique=True)
-    api_key = models.ForeignKey('profiles.APIKey',
-                                 on_delete=models.CASCADE)
-    api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi',
-                                 on_delete=models.CASCADE)
+    api_key_qiwi = models.ManyToManyField('profiles.APIKeyQiwi')
     buy_ad_settings = models.ForeignKey('btcbot.AdSetting',
                                         on_delete=models.CASCADE,
                                         related_name='buy_ad',
@@ -15,9 +12,7 @@ class BotSetting(models.Model):
                                          on_delete=models.CASCADE,
                                          related_name='sell_ad',
                                          )
-    target_profit = models.DecimalField(max_digits=9,
-                                        decimal_places=2,
-                                    )
+    target_profit = models.IntegerField()
     volume_max = models.IntegerField(null=True,
                                     )
     volume_min = models.IntegerField(null=True,
@@ -44,6 +39,9 @@ class AdSetting(models.Model):
                                          ('cash-deposit', 'CASH_DEPOSIT'),
                                          ('transfers-with-specific-bank', 'SPECIFIC_BANK'),
                                          ('yandex-money', 'YANDEXMONEY')))
+    my_price = models.IntegerField(null=True, blank=True)
+    api_key = models.ForeignKey('profiles.APIKey',
+                                on_delete=models.CASCADE)
     def __str__(self):
         return '%s' % self.name
 
