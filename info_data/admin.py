@@ -4,9 +4,7 @@ from .models import AdInfo, ReleasedTradesInfo, TradeReports
 
 
 class AdInfoAdmin(CustomModelAdminMixin, admin.ModelAdmin):
-    list_filter = ['min_amount',
-                   'max_amount',
-                   'page_number',
+    list_filter = ['page_number',
                    'trade_type',
                    'payment_method',]
     save_on_top = True

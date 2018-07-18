@@ -115,14 +115,15 @@ CELERY_TIMEZONE = 'Asia/Yekaterinburg'
 
 CELERY_RESULT_BACKEND = 'rpc://'
 
-#CELERY_BEAT_SCHEDULE = {
-#    'adbot_runner': {
-#        'task': 'ad_bot.tasks.adbot_runner',
-#        'schedule': 1.0},
-#}
+CELERY_BEAT_SCHEDULE = {
+    'ads_update_runner': {
+        'task': 'info_data.tasks.ads_update_runner',
+        'schedule': 10.0},
+}
 
-#CELERY_TASK_ROUTES = {'ad_bot.tasks.run_bot': {'queue': 'run_bot'},
-#                    }
+CELERY_TASK_ROUTES = {'info_data.tasks.ads_update_runner': {'queue': 'ads_update_runner'},
+                      'info_data.tasks.ads_updater': {'queue': 'ads_updater'},
+                    }
 
 try:
     from autobot.local_settings import *
