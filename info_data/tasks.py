@@ -51,25 +51,6 @@ def ads_updater(option, proxy_num):
         else:
             with open('info_data/ad_info_%.json' % str(option), 'w') as outfile:
                 json.dump(response.json(), outfile)
-#            my_ad_list = AdInfo.objects.filter(trade_type=trade_filter).filter(page_number=page_number)
-#            if my_ad_list:
-#                for i in my_ad_list:
-#                    i.delete()
-#            get_ad_list = response.json()['data']['ad_list']
-#            for i, item in enumerate(get_ad_list):
-#                AdInfo.objects.create(contragent=item['data']['profile']['username'],
-#                                      updated_at=timezone.now(),
-#                                      trade_type=item['data']['trade_type'],
-#                                      ad_id=item['data']['ad_id'],
-#                                      price=item['data']['temp_price'],
-#                                      payment_window=item['data']['payment_window_minutes'],
-#                                      min_amount=item['data']['min_amount'],
-#                                      max_amount=item['data']['max_amount_available'],
-#                                      price_usd=item['data']['temp_price_usd'],
-#                                      payment_method='QIWI',
-#                                      page_number=page_number,
-#                                      order_number=i+1,
-#                                    )
     if BotSetting.objects.filter(switch=True):
         if proxy_num == 1:
             proxy_num_n = 2

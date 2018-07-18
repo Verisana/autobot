@@ -1,13 +1,6 @@
 from django.contrib import admin
 from autobot.CustomModelAdminMixin import CustomModelAdminMixin
-from .models import AdInfo, ReleasedTradesInfo, TradeReports
-
-
-class AdInfoAdmin(CustomModelAdminMixin, admin.ModelAdmin):
-    list_filter = ['page_number',
-                   'trade_type',
-                   'payment_method',]
-    save_on_top = True
+from .models import ReleasedTradesInfo, TradeReports
 
 
 class ReleasedTradesInfoAdmin(CustomModelAdminMixin, admin.ModelAdmin):
@@ -21,6 +14,5 @@ class TradeReportsAdmin(CustomModelAdminMixin, admin.ModelAdmin):
     save_on_top = True
 
 
-admin.site.register(AdInfo, AdInfoAdmin)
 admin.site.register(ReleasedTradesInfo, ReleasedTradesInfoAdmin)
 admin.site.register(TradeReports, TradeReportsAdmin)

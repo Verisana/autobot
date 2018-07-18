@@ -1,25 +1,6 @@
 from django.db import models
 
 
-class AdInfo(models.Model):
-    contragent = models.CharField(max_length=128)
-    updated_at = models.DateTimeField()
-    trade_type = models.CharField(max_length=32)
-    ad_id = models.IntegerField()
-    price = models.DecimalField(max_digits=9,
-                                decimal_places=2)
-    payment_window = models.IntegerField()
-    min_amount = models.IntegerField()
-    max_amount = models.IntegerField()
-    price_usd = models.DecimalField(max_digits=9,
-                                    decimal_places=2)
-    payment_method = models.CharField(max_length=32)
-    page_number = models.IntegerField()
-    order_number = models.IntegerField()
-    def __str__(self):
-        return '%s - %s - %s' % (self.contragent, self.trade_type, self.payment_method)
-
-
 class ReleasedTradesInfo(models.Model):
     ad_id = models.IntegerField()
     trade_type = models.CharField(max_length=32)
