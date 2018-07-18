@@ -48,3 +48,4 @@ def proxy_list_scrapper():
 
 @shared_task
 def ads_update_runner():
+    pass
