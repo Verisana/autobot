@@ -14,9 +14,8 @@ class AdInfo(models.Model):
     price_usd = models.DecimalField(max_digits=9,
                                     decimal_places=2)
     payment_method = models.CharField(max_length=32)
-    username = models.ForeignKey('profiles.Profile',
-                                 on_delete=models.CASCADE)
     page_number = models.IntegerField()
+    order_number = models.IntegerField()
     def __str__(self):
         return '%s - %s - %s' % (self.contragent, self.trade_type, self.payment_method)
 
