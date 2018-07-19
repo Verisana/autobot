@@ -119,6 +119,9 @@ CELERY_BEAT_SCHEDULE = {
     'ads_update_runner': {
         'task': 'info_data.tasks.ads_update_runner',
         'schedule': 5.0},
+    'ad_bot_runner': {
+        'task': 'btcbot.tasks.ad_bot_runner',
+        'schedule': 5.0},
 }
 
 CELERY_TASK_ROUTES = {'info_data.tasks.ads_update_runner': {'queue': 'ads_update_runner'},
@@ -126,6 +129,9 @@ CELERY_TASK_ROUTES = {'info_data.tasks.ads_update_runner': {'queue': 'ads_update
                       'info_data.tasks.ads_updater_2': {'queue': 'ads_updater_2'},
                       'info_data.tasks.ads_updater_3': {'queue': 'ads_updater_3'},
                       'info_data.tasks.ads_updater_4': {'queue': 'ads_updater_4'},
+                      'btcbot.tasks.ad_bot_runner': {'queue': 'ad_bot_runner'},
+                      'btcbot.tasks.sell_ad_bot_execution': {'queue': 'sell_ad_bot_execution'},
+                      'btcbot.tasks.buy_ad_bot_execution': {'queue': 'buy_ad_bot_execution'},
                     }
 
 try:

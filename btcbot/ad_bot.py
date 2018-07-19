@@ -29,7 +29,7 @@ class AdUpdateBot():
         self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
                                  self.my_ad_info.api_key.api_secret)
         self.mean_buy_price = Decimal(self._find_mean_buy_price())
-        self.stop_price = self.mean_buy_price + Decimal(self.bot.target_profit)
+        self.stop_price = self._find_stop_price(Decimal(self.bot.target_profit), self.mean_buy_price, self.sell_direction)
         self.volume_min = self.bot.volume_min
         self.volume_max = self.bot.volume_max
 
@@ -44,6 +44,15 @@ class AdUpdateBot():
             return x / n
         else:
             return 1000000
+
+    def _find_stop_price(self, profit, mean_buy, sell_direction):
+        if sell_direction:
+            stop_price = mean_buy + profit
+            stop_price = stop_price + (stop_price * 0.01)
+            stop_price = stop_price + (profit * 0,018)
+            return stop_price
+        else:
+            return 0
 
     def _is_stop_triggered(self, price_comp, stop_price):
         if self.sell_direction:
