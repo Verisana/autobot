@@ -43,7 +43,9 @@ class AdSettingAdmin(admin.ModelAdmin):
     save_on_top = True
 
 
-class MeanBuyTradesAdmin(CustomModelAdminMixin, admin.ModelAdmin):
+class MeanBuyTradesAdmin(admin.ModelAdmin):
+    fields = [field.name for field in MeanBuyTrades._meta.fields if field.name != 'id' and field.name != 'created_at']
+    list_display = [field.name for field in MeanBuyTrades._meta.fields if field.name != 'id']
     save_on_top = True
 
 

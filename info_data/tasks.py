@@ -125,15 +125,17 @@ def ads_updater_4(proxy_num):
 @shared_task
 def ads_update_runner():
     bot_settings = BotSetting.objects.get(name='Bot_QIWI')
-    if bot_settings.switch_sell_ad_upd or bot_settings.switch_buy_ad_upd:
-        insp = inspect()
-        active = insp.active()
+    insp = inspect()
+    active = insp.active()
+    if bot_settings.switch_sell_ad_upd:
         if 'ads_updater_1@ubuntu' in active.keys():
             if not active['ads_updater_1@ubuntu']:
                 ads_updater_1.delay(1)
         if 'ads_updater_2@ubuntu' in active.keys():
             if not active['ads_updater_2@ubuntu']:
                 ads_updater_2.delay(1)
+
+    if bot_settings.switch_buy_ad_upd:
         if 'ads_updater_3@ubuntu' in active.keys():
             if not active['ads_updater_3@ubuntu']:
                 ads_updater_3.delay(1)
