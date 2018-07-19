@@ -123,15 +123,15 @@ def ads_update_runner():
     if BotSetting.objects.filter(switch=True):
         insp = inspect()
         active = insp.active()
-        if 'ads_updater_1@assanix-VirtualBox' in active.keys():
-            if not active['ads_updater_1@assanix-VirtualBox']:
+        if 'ads_updater_1@ubuntu' in active.keys():
+            if not active['ads_updater_1@ubuntu']:
                 ads_updater_1.delay(1)
-        if 'ads_updater_2@assanix-VirtualBox' in active.keys():
-            if not active['ads_updater_2@assanix-VirtualBox']:
+        if 'ads_updater_2@ubuntu' in active.keys():
+            if not active['ads_updater_2@ubuntu']:
                 ads_updater_2.delay(1)
-        if 'ads_updater_3@assanix-VirtualBox' in active.keys():
-            if not active['ads_updater_3@assanix-VirtualBox']:
+        if 'ads_updater_3@ubuntu' in active.keys():
+            if not active['ads_updater_3@ubuntu']:
                 ads_updater_3.delay(1)
-        if 'ads_updater_4@assanix-VirtualBox' in active.keys():
-            if not active['ads_updater_4@assanix-VirtualBox']:
+        if 'ads_updater_4@ubuntu' in active.keys():
+            if not active['ads_updater_4@ubuntu']:
                 ads_updater_4.delay(1)

@@ -1,3 +1,3 @@
 systemctl restart nginx
 systemctl restart uwsgi
-supervisorctl restart botbtc-celery-groups:*
+supervisorctl restart autobot-celery-groups:*

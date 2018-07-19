@@ -118,7 +118,7 @@ CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_BEAT_SCHEDULE = {
     'ads_update_runner': {
         'task': 'info_data.tasks.ads_update_runner',
-        'schedule': 10.0},
+        'schedule': 5.0},
 }
 
 CELERY_TASK_ROUTES = {'info_data.tasks.ads_update_runner': {'queue': 'ads_update_runner'},
