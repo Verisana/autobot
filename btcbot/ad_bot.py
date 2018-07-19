@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import *
+import json
 from .models import BotSetting, MeanBuyTrades
-from info_data.models import AdInfo
 from btcbot.local_api import LocalBitcoin
 
 
@@ -15,10 +15,18 @@ class AdUpdateBot():
         self.bot = BotSetting.objects.get(id=setting_id)
         self.sell_direction = sell_direction
         if self.sell_direction:
-            self.ad_info = AdInfo.objects.filter(trade_type='ONLINE_SELL')
+            self.ad_info = json.load(open('info_data/ad_info_1.json', 'r'))
+            if 'pagination' in self.ad_info:
+                ad_page_2 = json.load(open('info_data/ad_info_2.json', 'r'))
+                for i in ad_page_2['data']:
+                    self.ad_info.extend(i)
             self.my_ad_info = self.bot.sell_ad_settings
         else:
-            self.ad_info = AdInfo.objects.filter(trade_type='ONLINE_BUY')
+            self.ad_info = json.load(open('info_data/ad_info_3.json', 'r'))
+            if 'pagination' in self.ad_info:
+                ad_page_2 = json.load(open('info_data/ad_info_4.json', 'r'))
+                for i in ad_page_2['data']:
+                    self.ad_info.extend(i)
             self.my_ad_info = self.bot.buy_ad_settings
         self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
                                  self.my_ad_info.api_key.api_secret)
@@ -55,11 +63,11 @@ class AdUpdateBot():
             return False
 
     def _is_ad_filtered(self, curr_ad):
-        price_comp = curr_ad.price
-        min_value_comp = curr_ad.min_amount
+        price_comp = curr_ad['data']['temp_price']
+        min_value_comp = curr_ad['data']['min_amount']
         if min_value_comp == None:
             min_value_comp = 0
-        max_value_comp = curr_ad.max_amount
+        max_value_comp = curr_ad['data']['max_amount_available']
 
         return self._is_stop_triggered(price_comp, self.stop_price) \
                 or self._is_min_triggered(min_value_comp, self.volume_min) \
@@ -68,8 +76,9 @@ class AdUpdateBot():
     def _is_first(self):
         result = {'is_first': None, 'compensate': 0}
 
-        for i, item in enumerate(self.ad_info):
-            if item.ad_id == self.my_ad_info.ad_id and i - result['compensate'] == 0:
+        for i, item in enumerate(self.ad_info['data']['ad_list']):
+            ad_id = item['data']['ad_id']
+            if ad_id == self.my_ad_info.ad_id and i - result['compensate'] == 0:
                 ads_below_me = self.ad_info[i+1:]
                 if not self._is_ad_filtered(ads_below_me[0]):
                     result['is_first'] = True
@@ -94,15 +103,16 @@ class AdUpdateBot():
     def _update_price(self, rival):
         target_price = int()
         str_price = str()
+        temp_price = self.ad_info['data'][rival]['data']['temp_price']
         if self.sell_direction:
-            target_price = int(round(self.ad_info[rival].price)) - self.STEP
+            target_price = int(round(temp_price)) - self.STEP
             if self.PRICE_ROUND:
                 while target_price % 100 > 0:
                     target_price -= 1
             if target_price < int(round(self.stop_price)):
                 target_price = int(round(self.stop_price))
         else:
-            target_price = int(round(self.ad_info[rival].price)) + self.STEP
+            target_price = int(round(temp_price)) + self.STEP
             if self.PRICE_ROUND:
                 while target_price % 100 > 0:
                     target_price += 1

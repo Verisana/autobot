@@ -122,7 +122,10 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 CELERY_TASK_ROUTES = {'info_data.tasks.ads_update_runner': {'queue': 'ads_update_runner'},
-                      'info_data.tasks.ads_updater': {'queue': 'ads_updater'},
+                      'info_data.tasks.ads_updater_1': {'queue': 'ads_updater_1'},
+                      'info_data.tasks.ads_updater_2': {'queue': 'ads_updater_2'},
+                      'info_data.tasks.ads_updater_3': {'queue': 'ads_updater_3'},
+                      'info_data.tasks.ads_updater_4': {'queue': 'ads_updater_4'},
                     }
 
 try:
