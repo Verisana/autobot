@@ -1,24 +1,17 @@
-import hmac
-import json
-import urllib
-import hashlib
 import requests
-from urllib.parse import urlencode
-from datetime import datetime
+from btcbot import hmac_auth
 
 
 class LocalBitcoin:
-    baseurl = 'https://localbitcoins.net'
 
-    def __init__(self, hmac_auth_key, hmac_auth_secret, debug=False):
+    def __init__(self, hmac_auth_key, hmac_auth_secret, base_url='https://localbitcoins.net'):
+        self.base_url = base_url
         self.hmac_auth_key = hmac_auth_key
         self.hmac_auth_secret = hmac_auth_secret
-        self.debug = debug
-
 #    Public endpoints
 
     def get_public_ads(self, trade_direction, payment_method, page_number, proxy=None):
-        url = self.baseurl + '/' + trade_direction + '/' + 'rub/' + payment_method + '/.json?page=' + page_number
+        url = self.base_url + '/' + trade_direction + '/' + 'rub/' + payment_method + '/.json?page=' + page_number
         if proxy == None:
             return requests.get(url)
         else:
@@ -26,19 +19,19 @@ class LocalBitcoin:
 
 #    Returns public user profile information
     def get_account_info(self, username):
-        return requests.get(self.baseurl + 'api/account_info/' + username + '/')
+        return requests.get(self.base_url + '/api/account_info/' + username + '/')
 
 #    Private endpoints
 
     def update_equation(self, ad_id, price_equation):
         price_equation = {'price_equation': price_equation}
-        return self.send_request('api/ad-equation/' + ad_id + '/', price_equation, 'post')
+        return self.send_request('/api/ad-equation/' + ad_id + '/', price_equation, 'post')
 
     def get_all_notifications(self):
         return self.send_request('/api/notifications/', '', 'get')
 
     def mark_notification_as_read(self, notif_id):
-        return self.send_request('api/notifications/mark_as_read/' + notif_id + '/', '', 'post')
+        return self.send_request('/api/notifications/mark_as_read/' + notif_id + '/', '', 'post')
 
     def get_ad_info(self, ad_id):
         return self.send_request('/api/ad-get/' + ad_id + '/', '', 'get')
@@ -191,38 +184,5 @@ class LocalBitcoin:
         return self.send_request('/api/ads/', '', 'post')
 
     def send_request(self, endpoint, params, method):
-
-        params_encoded = ''
-        if params != '':
-            params_encoded = urllib.urlencode(params)
-            if method == 'get':
-                params_encoded = '?' + params_encoded
-
-        now = datetime.utcnow()
-        epoch = datetime.utcfromtimestamp(0)
-        delta = now - epoch
-        nonce = int(delta.total_seconds() * 1000)
-
-        message = str(nonce) + self.hmac_auth_key + endpoint + params_encoded
-        signature = hmac.new(self.hmac_auth_secret, msg=message, digestmod=hashlib.sha256).hexdigest().upper()
-
-        headers = {}
-        headers['Apiauth-key'] = self.hmac_auth_key
-        headers['Apiauth-Nonce'] = str(nonce)
-        headers['Apiauth-Signature'] = signature
-        if method == 'get':
-            response = requests.get(self.baseurl + endpoint, headers=headers, params=params)
-        else:
-            response = requests.post(self.baseurl + endpoint, headers=headers, data=params)
-
-        if self.debug == True:
-            print
-            'REQUEST: ' + self.baseurl + endpoint
-            print
-            'PARAMS: ' + str(params)
-            print
-            'METHOD: ' + method
-            print
-            'RESPONSE: ' + response.text
-
-        return json.loads(response.text)['data']
+        local_auth = hmac_auth.hmac(self.hmac_auth_key, self.hmac_auth_secret, self.base_url)
+        return local_auth.call(method, endpoint, params)

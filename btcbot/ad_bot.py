@@ -18,15 +18,13 @@ class AdUpdateBot():
             self.ad_info = json.load(open('info_data/ad_info_1.json', 'r'))
             if 'pagination' in self.ad_info:
                 ad_page_2 = json.load(open('info_data/ad_info_2.json', 'r'))
-                for i in ad_page_2['data']:
-                    self.ad_info.extend(i)
+                self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
             self.my_ad_info = self.bot.sell_ad_settings
         else:
             self.ad_info = json.load(open('info_data/ad_info_3.json', 'r'))
             if 'pagination' in self.ad_info:
                 ad_page_2 = json.load(open('info_data/ad_info_4.json', 'r'))
-                for i in ad_page_2['data']:
-                    self.ad_info.extend(i)
+                self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
             self.my_ad_info = self.bot.buy_ad_settings
         self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
                                  self.my_ad_info.api_key.api_secret)
@@ -37,12 +35,15 @@ class AdUpdateBot():
 
     def _find_mean_buy_price(self):
         mbt = MeanBuyTrades.objects.all()
-        n = 0
-        x = 0
-        for i, item in enumerate(mbt):
-            n += 1
-            x += item.price_rub
-        return x / n
+        if mbt:
+            n = 0
+            x = 0
+            for i, item in enumerate(mbt):
+                n += 1
+                x += item.price_rub
+            return x / n
+        else:
+            return 1000000
 
     def _is_stop_triggered(self, price_comp, stop_price):
         if self.sell_direction:
@@ -63,11 +64,11 @@ class AdUpdateBot():
             return False
 
     def _is_ad_filtered(self, curr_ad):
-        price_comp = curr_ad['data']['temp_price']
-        min_value_comp = curr_ad['data']['min_amount']
+        price_comp = Decimal(curr_ad['data']['temp_price'])
+        min_value_comp = int(curr_ad['data']['min_amount'])
         if min_value_comp == None:
             min_value_comp = 0
-        max_value_comp = curr_ad['data']['max_amount_available']
+        max_value_comp = int(curr_ad['data']['max_amount_available'])
 
         return self._is_stop_triggered(price_comp, self.stop_price) \
                 or self._is_min_triggered(min_value_comp, self.volume_min) \
@@ -103,7 +104,7 @@ class AdUpdateBot():
     def _update_price(self, rival):
         target_price = int()
         str_price = str()
-        temp_price = self.ad_info['data'][rival]['data']['temp_price']
+        temp_price = Decimal(self.ad_info['data']['ad_list'][rival]['data']['temp_price'])
         if self.sell_direction:
             target_price = int(round(temp_price)) - self.STEP
             if self.PRICE_ROUND:
@@ -122,14 +123,23 @@ class AdUpdateBot():
         if target_price == self.my_ad_info.my_price:
             pass
         else:
-            response = self.lbtc.update_equation(self.my_ad_info.ad_id, str_price)
+            response = self.lbtc.update_equation(str(self.my_ad_info.ad_id), str_price)
             if response.status_code == 200:
                 self.my_ad_info.my_price = target_price
                 self.my_ad_info.save(update_fields=['my_price'])
 
     def check_ads(self):
-        isfirst = self._is_first()
-        if isfirst['is_first']:
-            self._update_price(1+isfirst['compensate'])
+        ad_visible = False
+        for i in self.ad_info['data']['ad_list']:
+            if i['data']['ad_id'] == self.my_ad_info.ad_id:
+                ad_visible = True
+                break
+        if ad_visible:
+            isfirst = self._is_first()
+            if isfirst['is_first']:
+                self._update_price(1+isfirst['compensate'])
+            else:
+                self._update_price(isfirst['rival'])
         else:
-            self._update_price(isfirst['rival'])
+            self.bot.switch = False
+            self.bot.save(update_fields=['switch'])

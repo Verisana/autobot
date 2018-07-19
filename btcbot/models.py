@@ -17,9 +17,15 @@ class BotSetting(models.Model):
                                     )
     volume_min = models.IntegerField(null=True,
                                      )
-    switch = models.BooleanField(default=False)
+    switch_buy_ad_upd = models.BooleanField(default=False)
+    switch_sell_ad_upd = models.BooleanField(default=False)
+    switch_bot_buy = models.BooleanField(default=False)
+    switch_bot_sell = models.BooleanField(default=False)
+    switch_bot_send_rev = models.BooleanField(default=False)
+
     greetings_text = models.TextField(blank=True, null=True)
     farewell_text = models.TextField(blank=True, null=True)
+    review_text = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return '%s' % self.name
