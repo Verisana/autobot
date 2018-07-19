@@ -141,5 +141,9 @@ class AdUpdateBot():
             else:
                 self._update_price(isfirst['rival'])
         else:
-            self.bot.switch = False
-            self.bot.save(update_fields=['switch'])
+            if self.sell_direction:
+                self.bot.switch_sell_ad_upd = False
+                self.bot.save(update_fields=['switch_sell_ad_upd'])
+            else:
+                self.bot.switch_buy_ad_upd = False
+                self.bot.save(update_fields=['switch_buy_ad_upd'])

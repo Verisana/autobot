@@ -25,7 +25,8 @@ def ads_updater_1(proxy_num):
         with open('info_data/ad_info_1.json', 'w') as outfile:
             json.dump(response.json(), outfile)
 
-    if BotSetting.objects.filter(switch=True):
+    bot_settings = BotSetting.objects.get(name='Bot_QIWI')
+    if bot_settings.switch_sell_ad_upd or bot_settings.switch_buy_ad_upd:
         if proxy_num == 1:
             proxy_num = 2
         else:
@@ -55,7 +56,8 @@ def ads_updater_2(proxy_num):
             with open('info_data/ad_info_2.json', 'w') as outfile:
                 json.dump(response.json(), outfile)
 
-    if BotSetting.objects.filter(switch=True):
+    bot_settings = BotSetting.objects.get(name='Bot_QIWI')
+    if bot_settings.switch_sell_ad_upd or bot_settings.switch_buy_ad_upd:
         if proxy_num == 1:
             proxy_num = 2
         else:
@@ -80,7 +82,8 @@ def ads_updater_3(proxy_num):
         with open('info_data/ad_info_3.json', 'w') as outfile:
             json.dump(response.json(), outfile)
 
-    if BotSetting.objects.filter(switch=True):
+    bot_settings = BotSetting.objects.get(name='Bot_QIWI')
+    if bot_settings.switch_sell_ad_upd or bot_settings.switch_buy_ad_upd:
         if proxy_num == 1:
             proxy_num = 2
         else:
@@ -110,7 +113,8 @@ def ads_updater_4(proxy_num):
             with open('info_data/ad_info_4.json', 'w') as outfile:
                 json.dump(response.json(), outfile)
 
-    if BotSetting.objects.filter(switch=True):
+    bot_settings = BotSetting.objects.get(name='Bot_QIWI')
+    if bot_settings.switch_sell_ad_upd or bot_settings.switch_buy_ad_upd:
         if proxy_num == 1:
             proxy_num = 2
         else:
@@ -120,7 +124,8 @@ def ads_updater_4(proxy_num):
 
 @shared_task
 def ads_update_runner():
-    if BotSetting.objects.filter(switch=True):
+    bot_settings = BotSetting.objects.get(name='Bot_QIWI')
+    if bot_settings.switch_sell_ad_upd or bot_settings.switch_buy_ad_upd:
         insp = inspect()
         active = insp.active()
         if 'ads_updater_1@ubuntu' in active.keys():
