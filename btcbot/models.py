@@ -59,4 +59,4 @@ class MeanBuyTrades(models.Model):
     price_rub = models.DecimalField(max_digits=9,
                                     decimal_places=2)
     def __str__(self):
-        return 'Buy_active: %d' % self.created_at
+        return 'Buy_active: %s' % str(self.created_at)
