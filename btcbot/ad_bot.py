@@ -49,7 +49,7 @@ class AdUpdateBot():
         if sell_direction:
             stop_price = mean_buy + profit
             stop_price = stop_price + (stop_price * 0.01)
-            stop_price = stop_price + (profit * 0,018)
+            stop_price = stop_price + (profit * 0.018)
             return stop_price
         else:
             return 0
