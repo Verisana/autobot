@@ -14,13 +14,12 @@ class AdUpdateBot():
     def __init__(self, setting_id, proxy, sell_direction=True):
         self.bot = BotSetting.objects.get(id=setting_id)
         self.sell_direction = sell_direction
-        self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
-                                 self.my_ad_info.api_key.api_secret)
+        self.lbtc = LocalBitcoin('', '')
         if self.sell_direction:
             while True:
                 response = self.lbtc.get_sell_qiwi_ads(proxy)
                 if response[0].status_code == 200 and response[1].status_code == 200:
-                    self.my_ad_info = response[0].json()
+                    self.ad_info = response[0].json()
                     if 'pagination' in self.ad_info:
                         ad_page_2 = response[1].json()
                         self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
@@ -30,12 +29,14 @@ class AdUpdateBot():
             while True:
                 response = self.lbtc.get_buy_qiwi_ads(proxy)
                 if response[0].status_code == 200 and response[1].status_code == 200:
-                    self.my_ad_info = response[0].json()
+                    self.ad_info = response[0].json()
                     if 'pagination' in self.ad_info:
                         ad_page_2 = response[1].json()
                         self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
                     break
             self.my_ad_info = self.bot.buy_ad_settings
+        self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
+                                 self.my_ad_info.api_key.api_secret)
         self.mean_buy_price = Decimal(self._find_mean_buy_price())
         self.stop_price = self._find_stop_price(Decimal(self.bot.target_profit), self.mean_buy_price, self.sell_direction)
         self.my_ad_info.stop_price = self.stop_price

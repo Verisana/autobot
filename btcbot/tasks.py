@@ -1,3 +1,4 @@
+import pickle
 from celery import shared_task, task
 from celery.task.control import inspect
 from btcbot.models import BotSetting
@@ -8,7 +9,7 @@ from btcbot.ad_bot import AdUpdateBot
 def sell_ad_bot_execution(proxy_num):
     bot_settings = BotSetting.objects.get(name='Bot_QIWI')
     proxies_list = pickle.load(open('info_data/proxies_list.pickle', 'rb'))
-    if proxies_num == 1:
+    if proxy_num == 1:
         proxy = [proxies_list[0][1], proxies_list[2][1]]
     else:
         proxy = [proxies_list[1][1], proxies_list[3][1]]
@@ -26,7 +27,7 @@ def sell_ad_bot_execution(proxy_num):
 def buy_ad_bot_execution(proxy_num):
     bot_settings = BotSetting.objects.get(name='Bot_QIWI')
     proxies_list = pickle.load(open('info_data/proxies_list.pickle', 'rb'))
-    if proxies_num == 1:
+    if proxy_num == 1:
         proxy = [proxies_list[4][1], proxies_list[6][1]]
     else:
         proxy = [proxies_list[5][1], proxies_list[7][1]]
