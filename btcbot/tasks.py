@@ -1,4 +1,5 @@
 import pickle
+import random
 from celery import shared_task, task
 from celery.task.control import inspect
 from btcbot.models import BotSetting
