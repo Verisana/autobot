@@ -46,6 +46,10 @@ class AdSetting(models.Model):
                                          ('transfers-with-specific-bank', 'SPECIFIC_BANK'),
                                          ('yandex-money', 'YANDEXMONEY')))
     my_price = models.IntegerField(null=True, blank=True)
+    stop_price = models.DecimalField(max_digits=9,
+                                     decimal_places=2,
+                                     blank=True,
+                                     null=True)
     api_key = models.ForeignKey('profiles.APIKey',
                                 on_delete=models.CASCADE)
     def __str__(self):

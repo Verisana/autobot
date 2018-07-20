@@ -38,7 +38,7 @@ class BotSettingAdmin(admin.ModelAdmin):
 
 class AdSettingAdmin(admin.ModelAdmin):
     # Include all fields except id and my_price
-    fields = [field.name for field in AdSetting._meta.fields if field.name != 'id']
+    fields = [field.name for field in AdSetting._meta.fields if field.name != 'id' and field.name != 'stop_price']
     list_display = [field.name for field in AdSetting._meta.fields if field.name != 'id']
     save_on_top = True
 

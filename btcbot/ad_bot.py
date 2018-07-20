@@ -1,6 +1,6 @@
+import json
 from datetime import timedelta
 from decimal import *
-import json
 from .models import BotSetting, MeanBuyTrades
 from btcbot.local_api import LocalBitcoin
 
@@ -11,27 +11,38 @@ class AdUpdateBot():
     PRICE_ROUND = False
 
 
-    def __init__(self, setting_id, sell_direction=True):
+    def __init__(self, setting_id, proxy, sell_direction=True):
         self.bot = BotSetting.objects.get(id=setting_id)
         self.sell_direction = sell_direction
-        if self.sell_direction:
-            self.ad_info = json.load(open('info_data/ad_info_1.json', 'r'))
-            if 'pagination' in self.ad_info:
-                ad_page_2 = json.load(open('info_data/ad_info_2.json', 'r'))
-                self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
-            self.my_ad_info = self.bot.sell_ad_settings
-        else:
-            self.ad_info = json.load(open('info_data/ad_info_3.json', 'r'))
-            if 'pagination' in self.ad_info:
-                ad_page_2 = json.load(open('info_data/ad_info_4.json', 'r'))
-                self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
-            self.my_ad_info = self.bot.buy_ad_settings
         self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
                                  self.my_ad_info.api_key.api_secret)
+        if self.sell_direction:
+            while True:
+                response = self.lbtc.get_sell_qiwi_ads(proxy)
+                if response[0].status_code == 200 and response[1].status_code == 200:
+                    self.my_ad_info = response[0].json()
+                    if 'pagination' in self.ad_info:
+                        ad_page_2 = response[1].json()
+                        self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
+                    break
+            self.my_ad_info = self.bot.sell_ad_settings
+        else:
+            while True:
+                response = self.lbtc.get_buy_qiwi_ads(proxy)
+                if response[0].status_code == 200 and response[1].status_code == 200:
+                    self.my_ad_info = response[0].json()
+                    if 'pagination' in self.ad_info:
+                        ad_page_2 = response[1].json()
+                        self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
+                    break
+            self.my_ad_info = self.bot.buy_ad_settings
         self.mean_buy_price = Decimal(self._find_mean_buy_price())
         self.stop_price = self._find_stop_price(Decimal(self.bot.target_profit), self.mean_buy_price, self.sell_direction)
+        self.my_ad_info.stop_price = self.stop_price
+        self.my_ad_info.save(update_fields=['stop_price'])
         self.volume_min = self.bot.volume_min
         self.volume_max = self.bot.volume_max
+
 
     def _find_mean_buy_price(self):
         mbt = MeanBuyTrades.objects.all()
@@ -48,8 +59,8 @@ class AdUpdateBot():
     def _find_stop_price(self, profit, mean_buy, sell_direction):
         if sell_direction:
             stop_price = mean_buy + profit
-            stop_price = stop_price + (stop_price * 0.01)
-            stop_price = stop_price + (profit * 0.018)
+            stop_price = stop_price + (stop_price * Decimal('0.01'))
+            stop_price = stop_price + (profit * Decimal('0.018'))
             return stop_price
         else:
             return 0
@@ -89,7 +100,7 @@ class AdUpdateBot():
         for i, item in enumerate(self.ad_info['data']['ad_list']):
             ad_id = item['data']['ad_id']
             if ad_id == self.my_ad_info.ad_id and i - result['compensate'] == 0:
-                ads_below_me = self.ad_info[i+1:]
+                ads_below_me = self.ad_info['data']['ad_list'][i+1:]
                 if not self._is_ad_filtered(ads_below_me[0]):
                     result['is_first'] = True
                     break

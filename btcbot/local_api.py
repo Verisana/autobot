@@ -1,3 +1,4 @@
+import grequests
 import requests
 from btcbot import hmac_auth
 
@@ -15,7 +16,21 @@ class LocalBitcoin:
         if proxy == None:
             return requests.get(url)
         else:
-            return requests.get(url, proxies={'http': proxy, 'https': proxy}, timeout=5)
+            return requests.get(url, proxies={'http': proxy, 'https': proxy})
+
+    def get_sell_qiwi_ads(self, proxy):
+        urls = [(self.base_url + '/buy-bitcoins-online/rub/qiwi/.json?page=1', proxy[0]),
+                (self.base_url + '/buy-bitcoins-online/rub/qiwi/.json?page=2', proxy[1]),
+               ]
+        rs = (grequests.get(u[0], proxies={'http': u[1], 'https': u[1]}) for u in urls)
+        return grequests.map(rs)
+
+    def get_buy_qiwi_ads(self, proxy):
+        urls = [(self.base_url + '/sell-bitcoins-online/rub/qiwi/.json?page=1', proxy[0]),
+                (self.base_url + '/sell-bitcoins-online/rub/qiwi/.json?page=2', proxy[1]),
+               ]
+        rs = (grequests.get(u[0], proxies={'http': u[1], 'https': u[1]}) for u in urls)
+        return grequests.map(rs)
 
 #    Returns public user profile information
     def get_account_info(self, username):
