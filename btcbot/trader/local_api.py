@@ -1,15 +1,19 @@
 import grequests
 import requests
-from btcbot import hmac_auth
+from btcbot.trader import hmac_auth
 
 
 class LocalBitcoin:
 
-    def __init__(self, hmac_auth_key, hmac_auth_secret, base_url='https://localbitcoins.net'):
+    def __init__(self, hmac_auth_key, hmac_auth_secret, base_url='https://localbitcoins.net', proxy=None):
         self.base_url = base_url
         self.hmac_auth_key = hmac_auth_key
         self.hmac_auth_secret = hmac_auth_secret
+        self.proxy = proxy
 #    Public endpoints
+
+    def set_proxy(self, proxy):
+        self.proxy = proxy
 
     def get_public_ads(self, trade_direction, payment_method, page_number, proxy=None):
         url = self.base_url + '/' + trade_direction + '/' + 'rub/' + payment_method + '/.json?page=' + page_number
@@ -49,7 +53,7 @@ class LocalBitcoin:
         return self.send_request('/api/notifications/mark_as_read/' + notif_id + '/', '', 'post')
 
     def get_ad_info(self, ad_id):
-        return self.send_request('/api/ad-get/' + ad_id + '/', '', 'get')
+        return self.send_request('/api/ad-get/' + str(ad_id) + '/', '', 'get')
 
 #    Return the information of the currently logged in user (the owner of authentication token).
     def get_myself(self):
@@ -75,6 +79,9 @@ class LocalBitcoin:
 #    Return closed contacts, both released and canceled
     def get_dashboard_closed(self):
         return self.send_request('/api/dashboard/closed/', '', 'get')
+
+    def ad_edit(self, ad_id, params):
+        return self.send_request('/api/ad/' + str(ad_id) + '/', params, 'post')
 
 #    Releases the escrow of contact specified by ID {contact_id}.
 #    On success there's a complimentary message on the data key.
@@ -200,4 +207,4 @@ class LocalBitcoin:
 
     def send_request(self, endpoint, params, method):
         local_auth = hmac_auth.hmac(self.hmac_auth_key, self.hmac_auth_secret, self.base_url)
-        return local_auth.call(method, endpoint, params)
+        return local_auth.call(method, endpoint, self.proxy, params=params)

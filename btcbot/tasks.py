@@ -1,9 +1,9 @@
 import pickle
 import random
-from celery import shared_task, task
+from celery import shared_task
 from celery.task.control import inspect
 from btcbot.models import BotSetting
-from btcbot.ad_bot import AdUpdateBot
+from btcbot.trader.ad_bot import AdUpdateBot
 
 
 @shared_task

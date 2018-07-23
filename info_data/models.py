@@ -24,6 +24,8 @@ class ReleasedTradesInfo(models.Model):
                                      blank=True,
                                      null=True,
                                     )
+    api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE)
+
     def __str__(self):
         return '%d' % self.ad_id
 

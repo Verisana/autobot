@@ -17,7 +17,6 @@ console_output_handler.setFormatter(formatter)
 logger.addHandler(console_output_handler)
 logger.setLevel(logging.ERROR)
 ad = True
-proxy = None
 session = requests.session()
 API_URL = 'https://edge.qiwi.com/{0}'
 
@@ -25,7 +24,7 @@ CONNECT_TIMEOUT = 3.5
 READ_TIMEOUT = 9999
 
 
-def _make_request(token, method_name, method='get', params=None, base_url=API_URL, json=None):
+def _make_request(token, method_name, proxy, method='get', params=None, base_url=API_URL, json=None):
     headers = {'Accept': 'application/json',
                'Content-Type': 'application/json',
                'Authorization': "Bearer {0}".format(token)}
@@ -39,7 +38,7 @@ def _make_request(token, method_name, method='get', params=None, base_url=API_UR
         if 'connect-timeout' in params:
             connect_timeout = params['connect-timeout'] + 10
     result = session.request(method, request_url, params=params, timeout=(connect_timeout, read_timeout),
-                             proxies=proxy, headers=headers, json=json)
+                             proxies={'http': proxy, 'https': proxy}, headers=headers, json=json)
     logger.debug("The server returned: '{0}'".format(result.text.encode('utf8')))
     if method_name.split('/')[0] == 'sinap':
         method_name = method_name.split('/')[len(method_name.split('/')) - 1]
@@ -69,40 +68,40 @@ def _check_result(method_name, result):
     return result_json
 
 
-def person_profile(token, auth_info_enabled, contract_info_enabled, user_info_enabled):
+def person_profile(token, auth_info_enabled, contract_info_enabled, user_info_enabled, proxy):
     params = {'authInfoEnabled': str(auth_info_enabled).lower(),
               'contractInfoEnabled': str(contract_info_enabled).lower(),
               'userInfoEnabled': str(user_info_enabled).lower()
               }
     api_method = 'person-profile/v1/profile/current'
-    return _make_request(token, api_method, params=params)
+    return _make_request(token, api_method, proxy, params=params)
 
 
-def funding_sources(token):
+def funding_sources(token, proxy):
     api_method = 'funding-sources/v1/accounts/current'
-    return _make_request(token, api_method)
+    return _make_request(token, api_method, proxy)
 
 
-def get_by_alias(token, person_id):
+def get_by_alias(token, person_id, proxy):
     # V2 alternative to funding_sources
     api_method = 'funding-sources/v2/persons/{0}/accounts'.format(person_id)
-    return _make_request(token, api_method)
+    return _make_request(token, api_method, proxy)
 
 
-def get_accounts_offer(token, person_id):
+def get_accounts_offer(token, person_id, proxy):
     api_method = 'funding-sources/v2/persons/{0}/accounts/offer'.format(person_id)
-    return _make_request(token, api_method)
+    return _make_request(token, api_method, proxy)
 
 
-def create_account(token, person_id, dto):
+def create_account(token, person_id, dto, proxy):
     api_method = '/funding-sources/v2/persons/{0}/accounts'.format(person_id)
     body = {
         "accountAlias": dto
     }
-    return _make_request(token, api_method, method='post', json=body)
+    return _make_request(token, api_method, proxy, method='post', json=body)
 
 
-def payment_history(token, number, rows, operation=None, start_date=None, end_date=None, sources=None,
+def payment_history(token, number, rows, proxy, operation=None, start_date=None, end_date=None, sources=None,
                     next_txn_date=None, next_txn_id=None):
     api_method = "payment-history/v2/persons/{0}/payments".format(number)
     params = {'rows': rows}
@@ -115,10 +114,10 @@ def payment_history(token, number, rows, operation=None, start_date=None, end_da
     if next_txn_id and next_txn_date:
         params['nextTxnId'] = next_txn_id
         params['nextTxnDate'] = util.qiwi_date(next_txn_date)
-    return _make_request(token, api_method, params=params)
+    return _make_request(token, api_method, proxy, params=params)
 
 
-def total_payment_history(token, number, start_date, end_date, operation=None, sources=None):
+def total_payment_history(token, number, start_date, end_date, proxy, operation=None, sources=None):
     api_method = "payment-history/v2/persons/{0}/payments/total".format(number)
     params = {}
     if operation:
@@ -126,10 +125,10 @@ def total_payment_history(token, number, start_date, end_date, operation=None, s
     if sources:
         params = util.sources_list(sources, params)
     params = util.stat_dates(start_date, end_date, params)
-    return _make_request(token, api_method, params=params)
+    return _make_request(token, api_method, proxy, params=params)
 
 
-def online_commission(token, recipient, pid, amount):
+def online_commission(token, recipient, pid, amount, proxy):
     api_method = "sinap/providers/{0}/onlineCommission".format(pid)
     body = {'account': recipient,
             'paymentMethod':
@@ -139,10 +138,10 @@ def online_commission(token, recipient, pid, amount):
                 {'total': {'amount': amount,
                            'currency': '643'}}
             }
-    return _make_request(token, api_method, method='post', json=body)
+    return _make_request(token, api_method, proxy, method='post', json=body)
 
 
-def payments(token, pid, amount, recipient, comment=None, fields=None):
+def payments(token, pid, amount, recipient, proxy, comment=None, fields=None):
     api_method = "sinap/api/v2/terms/{0}/payments".format(pid)
     if fields:
         pass
@@ -158,20 +157,20 @@ def payments(token, pid, amount, recipient, comment=None, fields=None):
         body['comment'] = comment
     elif ad:
         body['comment'] = 'Отправлено с помощью pyQiwi'
-    return _make_request(token, api_method, method='post', json=body)
+    return _make_request(token, api_method, proxy, method='post', json=body)
 
 
-def local_commission(token, pid):
+def local_commission(token, pid, proxy):
     api_method = "sinap/providers/{0}/form".format(pid)
-    return _make_request(token, api_method)
+    return _make_request(token, api_method, proxy)
 
 
-def get_transaction(token, txn_id, txn_type):
+def get_transaction(token, txn_id, txn_type, proxy):
     api_method = 'payment-history/v2/transactions/{0}?type={1}'.format(txn_id, txn_type)
-    return _make_request(token, api_method)
+    return _make_request(token, api_method, proxy)
 
 
-def identification(token, wallet, birth_date, first_name, middle_name, last_name, passport, inn, snils, oms):
+def identification(token, wallet, birth_date, first_name, middle_name, last_name, passport, inn, snils, oms, proxy):
     api_method = 'identification/v1/persons/{0}/identification'.format(wallet)
     if inn is None:
         inn = ""
@@ -189,7 +188,7 @@ def identification(token, wallet, birth_date, first_name, middle_name, last_name
         "snils": snils,
         "oms": oms
     }
-    return _make_request(token, api_method, method='post', json=identity)
+    return _make_request(token, api_method, proxy, method='post', json=identity)
 
 
 def detect(phone):
@@ -201,11 +200,11 @@ def detect(phone):
         return None
 
 
-def cheque_file(token, txn_id, _type, _format):
+def cheque_file(token, txn_id, _type, _format, proxy):
     api_method = 'payment-history/v1/transactions/{0}/cheque/file'.format(txn_id)
-    return _make_request(token, api_method, params={"type": _type, "format": _format})
+    return _make_request(token, api_method, proxy, params={"type": _type, "format": _format})
 
 
-def cheque_send(token, txn_id, _type, email):
+def cheque_send(token, txn_id, _type, email, proxy):
     api_method = 'payment-history/v1/transactions/{0}/cheque/send'.format(txn_id)
-    return _make_request(token, api_method, method='post', params={"type": _type}, json={"email": email})
+    return _make_request(token, api_method, proxy, method='post', params={"type": _type}, json={"email": email})

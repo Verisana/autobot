@@ -17,7 +17,7 @@ class Connection():
         self.hmac_key = None
         self.hmac_secret = None
 
-    def call(self, method, url, params=None, stream=False, files=None):
+    def call(self, method, url, proxy, params=None, stream=False, files=None):
         method = method.upper()
         if method not in ['GET', 'POST']:
             raise Exception(u'Invalid method {}!'.format(method))
@@ -53,7 +53,7 @@ class Connection():
                 api_request.headers['Apiauth-Signature'] = signature
 
                 session = requests.Session()
-                response = session.send(api_request, stream=stream)
+                response = session.send(api_request, stream=stream, proxies={'http': proxy, 'https': proxy})
 
                 try:
                     response_json = response.json()

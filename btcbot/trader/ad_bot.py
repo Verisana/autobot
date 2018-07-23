@@ -1,8 +1,7 @@
-import json
 from datetime import timedelta
 from decimal import *
-from .models import BotSetting, MeanBuyTrades
-from btcbot.local_api import LocalBitcoin
+from btcbot.models import BotSetting, MeanBuyTrades
+from btcbot.trader.local_api import LocalBitcoin
 
 
 class AdUpdateBot():

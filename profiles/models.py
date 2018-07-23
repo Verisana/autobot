@@ -14,16 +14,33 @@ class APIKey(models.Model):
     username = models.ForeignKey('Profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
-        text = '%s' % (self.name)
-        return text
+        return '%s' % self.name
 
 
 class APIKeyQiwi(models.Model):
     name = models.CharField(max_length=64)
+    order = models.IntegerField()
     api_key = models.CharField(max_length=32)
     username = models.ForeignKey('Profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     phone_number = models.CharField(max_length=11)
+    proxy = models.CharField(max_length=25, null=True, blank=True)
+    bank_card = models.CharField(max_length=32, blank=True, null=True)
+    pay_system = models.CharField(max_length=64,
+                                  choices=(('1960', 'Visa'), ('21012', 'MasterCard')),
+                                  blank=True, null=True)
+    limit_left = models.DecimalField(max_digits=9, decimal_places=2, null=True, default=0)
+    balance = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
+    used_at = models.DateTimeField(blank=True, null=True)
+    is_blocked = models.BooleanField(default=False)
     def __str__(self):
-        text = '%s' % (self.name)
-        return text
+        return '%s' % self.name
+
+class TelegramBotSettings(models.Model):
+    name = models.CharField(max_length=64)
+    token = models.CharField(max_length=64)
+    chat_emerg = models.CharField(max_length=32)
+    chat_report = models.CharField(max_length=32)
+    proxy = models.CharField(max_length=25, blank=True, null=True)
+    def __str__(self):
+        return '%s' % self.name

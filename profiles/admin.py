@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm
-from .models import Profile, APIKey, APIKeyQiwi
+from .models import Profile, APIKey, APIKeyQiwi, TelegramBotSettings
 
 
 class ProfileChangeForm(UserChangeForm):
@@ -29,6 +29,12 @@ class APIKeyQiwiAdmin(admin.ModelAdmin):
     list_display = [field.name for field in APIKeyQiwi._meta.fields if field.name != 'id']
 
 
+class TelegramBotSettingsAdmin(admin.ModelAdmin):
+    fields = [field.name for field in TelegramBotSettings._meta.fields if field.name != 'id']
+    list_display = [field.name for field in TelegramBotSettings._meta.fields if field.name != 'id']
+
+
 admin.site.register(APIKey, APIKeyAdmin)
 admin.site.register(APIKeyQiwi, APIKeyQiwiAdmin)
 admin.site.register(Profile, ProfileAdmin)
+admin.site.register(TelegramBotSettings, TelegramBotSettingsAdmin)

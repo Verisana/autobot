@@ -13,7 +13,7 @@ APICodes = {'400': [{'method_name': None, 'msg': 'Invalid request syntax (invali
 class APIError(Exception):
     """
     Ошибка в Qiwi API
-
+f
     Attributes
     ----------
     msg : str
