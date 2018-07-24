@@ -14,25 +14,10 @@ class AdUpdateBot():
         self.bot = BotSetting.objects.get(id=setting_id)
         self.sell_direction = sell_direction
         self.lbtc = LocalBitcoin('', '')
+        self.ad_info = None
         if self.sell_direction:
-            while True:
-                response = self.lbtc.get_sell_qiwi_ads(proxy)
-                if response[0].status_code == 200 and response[1].status_code == 200:
-                    self.ad_info = response[0].json()
-                    if 'pagination' in self.ad_info:
-                        ad_page_2 = response[1].json()
-                        self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
-                    break
             self.my_ad_info = self.bot.sell_ad_settings
         else:
-            while True:
-                response = self.lbtc.get_buy_qiwi_ads(proxy)
-                if response[0].status_code == 200 and response[1].status_code == 200:
-                    self.ad_info = response[0].json()
-                    if 'pagination' in self.ad_info:
-                        ad_page_2 = response[1].json()
-                        self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
-                    break
             self.my_ad_info = self.bot.buy_ad_settings
         self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
                                  self.my_ad_info.api_key.api_secret)
@@ -43,18 +28,45 @@ class AdUpdateBot():
         self.volume_min = self.bot.volume_min
         self.volume_max = self.bot.volume_max
 
-
     def _find_mean_buy_price(self):
         mbt = MeanBuyTrades.objects.all()
-        if mbt:
+        quant = Decimal('0.00000001')
+        if len(mbt) == 1:
+            return mbt[0].price_rub
+        elif mbt:
             n = 0
             x = 0
             for i, item in enumerate(mbt):
-                n += 1
-                x += item.price_rub
+                prod = int(round(item.btc_amount / quant, 0))
+                n += 1 + prod
+                x += item.price_rub * prod
             return x / n
         else:
-            return 1000000
+            return None
+
+    def _get_ad_info(self):
+        if self.sell_direction:
+            n = 0
+            while n < 9:
+                response = self.lbtc.get_sell_qiwi_ads(proxy)
+                if response[0].status_code == 200 and response[1].status_code == 200:
+                    self.ad_info = response[0].json()
+                    if 'pagination' in self.ad_info:
+                        ad_page_2 = response[1].json()
+                        self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
+                    break
+                n += 1
+        else:
+            n = 0
+            while n < 9:
+                response = self.lbtc.get_buy_qiwi_ads(proxy)
+                if response[0].status_code == 200 and response[1].status_code == 200:
+                    self.ad_info = response[0].json()
+                    if 'pagination' in self.ad_info:
+                        ad_page_2 = response[1].json()
+                        self.ad_info['data']['ad_list'].extend(ad_page_2['data']['ad_list'])
+                    break
+                n += 1
 
     def _find_stop_price(self, profit, mean_buy, sell_direction):
         if sell_direction:
@@ -149,6 +161,8 @@ class AdUpdateBot():
                 self.my_ad_info.save(update_fields=['my_price'])
 
     def check_ads(self):
+        if not self.ad_info:
+            self._get_ad_info()
         ad_visible = False
         for i in self.ad_info['data']['ad_list']:
             if i['data']['ad_id'] == self.my_ad_info.ad_id:

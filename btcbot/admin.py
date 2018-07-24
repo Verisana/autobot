@@ -53,7 +53,6 @@ class MeanBuyTradesAdmin(admin.ModelAdmin):
     save_on_top = True
 
 class OpenTradesAdmin(admin.ModelAdmin):
-    fields = [field.name for field in OpenTrades._meta.fields if field.name != 'id' and field.name != 'created_at']
     list_display = [field.name for field in OpenTrades._meta.fields if field.name != 'id']
     save_on_top = True
 

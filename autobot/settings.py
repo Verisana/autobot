@@ -119,11 +119,24 @@ CELERY_BEAT_SCHEDULE = {
     'ad_bot_runner': {
         'task': 'btcbot.tasks.ad_bot_runner',
         'schedule': 5.0},
+    'seller_bot_handler': {
+        'task': 'btcbot.tasks.seller_bot_handler',
+        'schedule': 5.0},
+    'daily_routines': {
+        'task': 'info_data.tasks.daily_routine_starter',
+        'schedule': crontab(minute='00', hour='00')},
+    'qiwi_status_updater': {
+        'task': 'profiles.tasks.qiwi_status_updater',
+        'schedule': 10.0},
 }
 
 CELERY_TASK_ROUTES = {'btcbot.tasks.ad_bot_runner': {'queue': 'ad_bot_runner'},
                       'btcbot.tasks.sell_ad_bot_execution': {'queue': 'sell_ad_bot_execution'},
                       'btcbot.tasks.buy_ad_bot_execution': {'queue': 'buy_ad_bot_execution'},
+                      'info_data.tasks.daily_report_handler': {'queue': 'fast_rare_tasks'},
+                      'profiles.tasks.qiwi_status_updater': {'queue': 'qiwi_status_updater'},
+                      'profiles.tasks.qiwi_limit_resetter': {'queue': 'fast_rare_tasks'},
+                      'profiles.tasks.qiwi_profit_fixator': {'queue': 'qiwi_profit_fixator'},
                     }
 
 try:

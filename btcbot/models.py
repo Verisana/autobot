@@ -59,10 +59,8 @@ class AdSetting(models.Model):
 
 class MeanBuyTrades(models.Model):
     created_at = models.DateTimeField(auto_now=True)
-    btc_amount = models.DecimalField(max_digits=10,
-                                     decimal_places=8)
-    price_rub = models.DecimalField(max_digits=9,
-                                    decimal_places=2)
+    btc_amount = models.DecimalField(max_digits=10, decimal_places=8, null=True)
+    price_rub = models.DecimalField(max_digits=9, decimal_places=2)
     def __str__(self):
         return 'Buy_active: %s' % str(self.created_at)
 
@@ -75,6 +73,7 @@ class OpenTrades(models.Model):
                                      decimal_places=8)
     created_at = models.DateTimeField(auto_now=True)
     reference_text = models.CharField(max_length=256)
+    api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE, blank=True, null=True)
     sent_first_message = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     sent_second_message = models.BooleanField(default=False)
