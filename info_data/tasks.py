@@ -8,13 +8,13 @@ from profiles.tasks import qiwi_limit_resetter, qiwi_profit_fixator, qiwi_status
 import telegram
 
 
-@shared_tasks
+@shared_task
 def daily_routine_starter():
     daily_report_handler.delay()
     qiwi_limit_resetter.delay()
     qiwi_profit_fixator.delay()
 
-@shared_tasks
+@shared_task
 def daily_report_handler(full=True):
     sum_sell_rub = Decimal('0.0')
     sum_sell_btc = Decimal('0.0')

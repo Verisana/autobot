@@ -27,7 +27,8 @@ class APIKeyQiwi(models.Model):
     proxy = models.CharField(max_length=25, null=True, blank=True)
     bank_card = models.CharField(max_length=32, blank=True, null=True)
     pay_system = models.CharField(max_length=64,
-                                  choices=(('1960', 'Visa'), ('21012', 'MasterCard')),
+                                  choices=(('1963', 'Visa'),
+                                           ('21013', 'MasterCard')),
                                   blank=True, null=True)
     limit_left = models.DecimalField(max_digits=9, decimal_places=2, null=True, default=0)
     balance = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)

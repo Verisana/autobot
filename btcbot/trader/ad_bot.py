@@ -72,7 +72,7 @@ class AdUpdateBot():
         if sell_direction:
             stop_price = mean_buy + profit
             stop_price = stop_price + (stop_price * Decimal('0.01'))
-            stop_price = stop_price + (profit * Decimal('0.018'))
+            stop_price = stop_price + (profit * (self.bot.qiwi_profit_fee / 100))
             return stop_price
         else:
             return 0

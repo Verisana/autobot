@@ -14,6 +14,7 @@ class BotSetting(models.Model):
                                                blank=True,
                                                null=True)
     target_profit = models.IntegerField()
+    qiwi_profit_fee = models.DecimalField(max_digits=2, decimal_places=1, default='1.8')
     volume_max = models.IntegerField(null=True)
     volume_min = models.IntegerField(null=True)
     switch_buy_ad_upd = models.BooleanField(default=False)

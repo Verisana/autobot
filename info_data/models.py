@@ -18,5 +18,7 @@ class ReleasedTradesInfo(models.Model):
     profit_rub_trade = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     profit_rub_full = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE)
+    is_profit_fixated = models.BooleanField(default=False)
+    is_qiwi_blocked = models.BooleanField(default=False)
     def __str__(self):
         return '%d' % self.ad_id
