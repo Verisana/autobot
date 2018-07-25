@@ -1,4 +1,3 @@
-import gevent.monkey
 from decimal import *
 from celery import shared_task
 from info_data.models import ReleasedTradesInfo

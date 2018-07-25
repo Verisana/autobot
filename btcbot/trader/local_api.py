@@ -1,6 +1,6 @@
-import grequests
 import requests
 from btcbot.trader import hmac_auth
+from requests_futures.sessions import FuturesSession
 
 
 class LocalBitcoin:
@@ -26,15 +26,19 @@ class LocalBitcoin:
         urls = [(self.base_url + '/buy-bitcoins-online/rub/qiwi/.json?page=1', proxy[0]),
                 (self.base_url + '/buy-bitcoins-online/rub/qiwi/.json?page=2', proxy[1]),
                ]
-        rs = (grequests.get(u[0], proxies={'http': u[1], 'https': u[1]}) for u in urls)
-        return grequests.map(rs)
+        session = FuturesSession()
+        sent = [session.get(u[0], proxies={'http': u[1], 'https': u[1]}) for u in urls]
+        rs = [response.result() for response in sent]
+        return rs
 
     def get_buy_qiwi_ads(self, proxy):
         urls = [(self.base_url + '/sell-bitcoins-online/rub/qiwi/.json?page=1', proxy[0]),
                 (self.base_url + '/sell-bitcoins-online/rub/qiwi/.json?page=2', proxy[1]),
                ]
-        rs = (grequests.get(u[0], proxies={'http': u[1], 'https': u[1]}) for u in urls)
-        return grequests.map(rs)
+        session = FuturesSession()
+        sent = [session.get(u[0], proxies={'http': u[1], 'https': u[1]}) for u in urls]
+        rs = [response.result() for response in sent]
+        return rs
 
 #    Returns public user profile information
     def get_account_info(self, username):
