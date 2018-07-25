@@ -10,7 +10,6 @@ from btcbot.models import BotSetting, OpenTrades
 @shared_task
 def qiwi_status_updater():
     qiwis = APIKeyQiwi.objects.filter(is_blocked=False)
-    trades = OpenTrades.objects.all()
     bot_set = BotSetting.objects.get(name='Bot_QIWI')
     if bot_set.switch_qiwi_updater:
         for qiwi in qiwis:
