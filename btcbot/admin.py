@@ -19,6 +19,7 @@ class BotSettingAdmin(admin.ModelAdmin):
                     'volume_max',
                     'buy_ad_settings',
                     'sell_ad_settings',
+                    'qiwi_limit',
                     ]
     filter_horizontal = ['api_key_qiwi']
 

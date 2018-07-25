@@ -31,7 +31,7 @@ class APIKeyQiwi(models.Model):
     used_at = models.DateTimeField(blank=True, null=True)
     is_blocked = models.BooleanField(default=False)
     def __str__(self):
-        return '%s' % self.name
+        return '{0}: {1}, {2}'.format(self.name, self.is_blocked, self.balance)
 
 class TelegramBotSettings(models.Model):
     name = models.CharField(max_length=64)

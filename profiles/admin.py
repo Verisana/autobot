@@ -21,7 +21,7 @@ class APIKeyAdmin(admin.ModelAdmin):
 
 class APIKeyQiwiAdmin(admin.ModelAdmin):
     fields = [field.name for field in APIKeyQiwi._meta.fields if field.name != 'id' and field.name != 'created_at']
-    list_display = [field.name for field in APIKeyQiwi._meta.fields if field.name != 'id']
+    list_display = [field.name for field in APIKeyQiwi._meta.fields if field.name != 'id' and field.name != 'api_key']
 
 
 class TelegramBotSettingsAdmin(admin.ModelAdmin):
