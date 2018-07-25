@@ -19,7 +19,6 @@ class APIKey(models.Model):
 
 class APIKeyQiwi(models.Model):
     name = models.CharField(max_length=64)
-    order = models.IntegerField()
     api_key = models.CharField(max_length=32)
     username = models.ForeignKey('Profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
