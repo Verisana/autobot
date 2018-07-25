@@ -3,7 +3,7 @@ from django.db import models
 
 class BotSetting(models.Model):
     name = models.CharField(max_length=64, unique=True)
-    api_key_qiwi = models.ManyToManyField('profiles.APIKeyQiwi', blank=True, null=True)
+    api_key_qiwi = models.ManyToManyField('profiles.APIKeyQiwi', blank=True)
     buy_ad_settings = models.ForeignKey('btcbot.AdSetting',
                                         on_delete=models.CASCADE,
                                         related_name='buy_ad')
@@ -24,6 +24,7 @@ class BotSetting(models.Model):
     switch_rev_send_sell = models.BooleanField(default=False)
     switch_rev_send_buy = models.BooleanField(default=False)
     switch_profit_fixator = models.BooleanField(default=True)
+    switch_qiwi_updater = models.BooleanField(default=True)
     is_ad_visible = models.BooleanField(default=False)
     greetings_text = models.TextField(blank=True, null=True)
     farewell_text = models.TextField(blank=True, null=True)

@@ -11,7 +11,8 @@ from btcbot.models import BotSetting, OpenTrades
 def qiwi_status_updater():
     qiwis = APIKeyQiwi.objects.filter(is_blocked=False)
     trades = OpenTrades.objects.all()
-    if trades:
+    bot_set = BotSetting.objects.get(name='Bot_QIWI')
+    if bot_set.switch_qiwi_updater:
         for qiwi in qiwis:
             wallet = pyqiwi.Wallet(token=qiwi.api_key,
                                    proxy=qiwi.proxy,
