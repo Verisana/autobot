@@ -182,7 +182,7 @@ class LocalSellerBot():
         rate_rub = Decimal(local_trade['data']['amount']) / (
                     Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         buy_rate = self.ad_upd._find_mean_buy_price()
-        profit_rub_trade = (1 - (buy_rate / rate_rub)) * Decimal(local_trade['data']['amount']
+        profit_rub_trade = (1 - (buy_rate / rate_rub)) * Decimal(local_trade['data']['amount'])
         profit_rub_trade -= profit_rub_trade * (self.bot.qiwi_profit_fee / 100)
         ReleasedTradesInfo.objects.create(ad_id=local_trade['data']['contact_id'],
                                           trade_type=local_trade['data']['advertisement']['trade_type'],

@@ -21,7 +21,7 @@ class AdUpdateBot():
             self.my_ad_info = self.bot.buy_ad_settings
         self.lbtc = LocalBitcoin(self.my_ad_info.api_key.api_key,
                                  self.my_ad_info.api_key.api_secret)
-        self.mean_buy_price = Decimal(self._find_mean_buy_price())
+        self.mean_buy_price = self._find_mean_buy_price()
         self.stop_price = self._find_stop_price(Decimal(self.bot.target_profit), self.mean_buy_price, self.sell_direction)
         self.my_ad_info.stop_price = self.stop_price
         self.my_ad_info.save(update_fields=['stop_price'])
@@ -40,7 +40,7 @@ class AdUpdateBot():
                 prod = int(round(item.btc_amount / quant, 0))
                 n += 1 + prod
                 x += item.price_rub * prod
-            return x / n
+            return Decimal(x / n)
         else:
             return None
 
