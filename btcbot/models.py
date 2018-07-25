@@ -23,8 +23,8 @@ class BotSetting(models.Model):
     switch_bot_sell = models.BooleanField(default=False)
     switch_rev_send_sell = models.BooleanField(default=False)
     switch_rev_send_buy = models.BooleanField(default=False)
+    switch_profit_fixator = models.BooleanField(default=True)
     is_ad_visible = models.BooleanField(default=False)
-
     greetings_text = models.TextField(blank=True, null=True)
     farewell_text = models.TextField(blank=True, null=True)
     review_text = models.TextField(blank=True, null=True)
@@ -80,7 +80,5 @@ class OpenTrades(models.Model):
     sent_second_message = models.BooleanField(default=False)
     left_review = models.BooleanField(default=False)
     disputed = models.BooleanField(default=False)
-    canceled = models.BooleanField(default=False)
-    need_help = models.BooleanField(default=False)
     def __str__(self):
         return 'Open trade #%d' % self.trade_id

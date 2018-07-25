@@ -2,8 +2,9 @@ import pickle
 import random
 from celery import shared_task
 from celery.task.control import inspect
-from btcbot.models import BotSetting
+from btcbot.models import BotSetting, OpenTrades
 from btcbot.trader.ad_bot import AdUpdateBot
+from btcbot.trader.seller_bot import LocalSellerBot
 
 
 @shared_task
@@ -56,3 +57,39 @@ def ad_bot_runner():
         if 'buy_ad_bot_execution@ubuntu' in active.keys():
             if not active['buy_ad_bot_execution@ubuntu']:
                 buy_ad_bot_execution.delay(random.sample([1, 2], 1))
+
+@shared_task
+def seller_bot_handler():
+    bot = BotSetting.objects.get(name='Bot_QIWI')
+    seller = LocalSellerBot(bot.id)
+    if bot.switch_bot_sell:
+        seller.check_new_trades()
+    trades = OpenTrades.objects.all()
+
+    for trade in trades:
+        if trade.disputed:
+            continue
+        if not trade.sent_first_message:
+            if seller.send_first_message(trade):
+                trade.sent_first_message = True
+                trade.save(update_fields=['sent_first_message'])
+        if not trade.paid:
+            if seller.check_payment(trade):
+                continue
+        if not trade.sent_second_message:
+            if seller.send_second_message(trade):
+                trade.sent_second_message = True
+                trade.save(update_fields=['sent_second_message'])
+        if not trade.left_review and bot.switch_rev_send_sell:
+            if seller.leave_review(trade):
+                trade.delete()
+        elif not bot.switch_rev_send_sell:
+            trade.delete()
+
+@shared_task
+def open_trades_cleaner():
+    bot = BotSetting.objects.get(name='Bot_QIWI')
+    seller = LocalSellerBot(bot.id)
+    trades = OpenTrades.objects.filter(disputed=True)
+    for trade in trades:
+        seller.check_dispute_result(trade)

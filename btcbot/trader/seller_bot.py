@@ -11,11 +11,12 @@ import telegram
 class LocalSellerBot():
     reference_text = 'Сделка на сайте LocalBitcoins.net #'
 
-    def __init__(self, setting_id):
+    def __init__(self, setting_id, proxy=None):
         self.bot = BotSetting.objects.get(id=setting_id)
         self.ad_upd = AdUpdateBot(setting_id, proxy=None)
         self.lbtc = LocalBitcoin(self.bot.sell_ad_settings.api_key.api_key,
-                                 self.bot.sell_ad_settings.api_key.api_secret)
+                                 self.bot.sell_ad_settings.api_key.api_secret,
+                                 proxy=proxy)
         self.qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
         self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token)
         self.my_ad_info = None
@@ -122,6 +123,18 @@ class LocalSellerBot():
             self.bot.switch_bot_sell = False
             self.bot.save(update_fields=['switch_bot_sell'])
 
+    def _release_btc(self, trade_obj):
+        response = self.lbtc.contact_release(str(trade_obj.trade_id))
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+
+    def _is_trade_processed(self, con_id):
+        for i in OpenTrades.objects.all():
+            if con_id == i.trade_id:
+                return True
+        return False
 
     def send_first_message(self, trade_obj):
         qiwi = self._get_appropriate_qiwi(trade_obj.amount_rub)
@@ -148,18 +161,49 @@ class LocalSellerBot():
         else:
             return False
 
-    def _release_btc(self, trade_obj):
-        response = self.lbtc.contact_release(str(trade_obj.trade_id))
-        if response.status_code == 200:
-            return True
-        else:
+    def check_dispute_result(self, my_trade):
+        local_trade = self._get_specific_trade(my_trade.trade_id)
+        if local_trade == None:
             return False
 
-    def _is_trade_processed(self, con_id):
-        for i in OpenTrades.objects.all():
-            if con_id == i.trade_id:
-                return True
-        return False
+        if local_trade['data']['released_at']:
+            message = 'Спор по сделке №{0} завершился отпуском битков. Проверьте, поступила ли оплата. Если нет, то сделку надо удалить из системы'.format(my_trade.trade_id)
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+            self.make_new_deal(my_trade)
+            my_trade.delete()
+        elif local_trade['data']['closed_at']:
+            my_trade.delete()
+
+    def make_new_deal(self, my_trade):
+        local_trade = self._get_specific_trade(my_trade.trade_id)
+        if local_trade == None:
+            return False
+
+        rate_rub = Decimal(local_trade['data']['amount']) / (
+                    Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
+        buy_rate = self.ad_upd._find_mean_buy_price()
+        profit_rub_trade = (1 - (buy_rate / rate_rub)) * Decimal(local_trade['data']['amount']
+        profit_rub_trade -= profit_rub_trade * (self.bot.qiwi_profit_fee / 100)
+        ReleasedTradesInfo.objects.create(ad_id=local_trade['data']['contact_id'],
+                                          trade_type=local_trade['data']['advertisement']['trade_type'],
+                                          payment_method=local_trade['data']['advertisement']['payment_method'],
+                                          created_at=timezone.now(),
+                                          released_at=local_trade['data']['released_at'],
+                                          reference_code=local_trade['data']['reference_code'],
+                                          contact_id=local_trade['data']['contact_id'],
+                                          amount_rub=local_trade['data']['amount'],
+                                          amount_btc=local_trade['data']['amount_btc'],
+                                          fee_btc=local_trade['data']['fee_btc'],
+                                          rate_rub=rate_rub,
+                                          seller=local_trade['data']['seller']['username'],
+                                          buyer=local_trade['data']['buyer']['username'],
+                                          profit_rub_trade=profit_rub_trade,
+                                          profit_rub_full=rate_rub - buy_rate,
+                                          api_key_qiwi=my_trade.api_key_qiwi)
+        self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
+        my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
+        my_trade.api_key_qiwi.save(update_fileds=['limit_left'])
+        my_trade.delete()
 
     def check_new_trades(self):
         if not self.opened_trades:
@@ -207,44 +251,29 @@ class LocalSellerBot():
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
             return None
+        if local_trade['data']['canceled_at'] or (local_trade['data']['closed_at'] and not local_trade['data']['released_at']):
+            my_trade.delete()
+            return True
+        if local_trade['data']['disputed_at']:
+            message = 'По сделке №{0} открыт диспут {1}'.format(my_trade.id, local_trade['data']['disputed_at'])
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+            my_trade.disputed = True
+            my_trade.save(update_fields=['disputed'])
+            return None
         for payment in payments['transactions']:
             if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
-                    and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['canceled_at'] \
-                    and not local_trade['data']['disputed_at'] and not local_trade['data']['released_at']:
+                    and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
                 if self._release_btc(my_trade):
                     my_trade.paid = True
                     my_trade.save(update_fields=['paid'])
-                    rate_rub = Decimal(local_trade['data']['amount']) / (Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
-                    buy_rate = self.ad_upd._find_mean_buy_price()
-                    profit_rub_trade = (1 - (buy_rate / rate_rub)) * Decimal(local_trade['data']['amount']
-                    profit_rub_trade -= profit_rub_trade * (self.bot.qiwi_profit_fee / 100)
-                    ReleasedTradesInfo.objects.create(ad_id=local_trade['data']['contact_id'],
-                                                      trade_type=local_trade['data']['advertisement']['trade_type'],
-                                                      payment_method=local_trade['data']['advertisement']['payment_method'],
-                                                      created_at=timezone.now(),
-                                                      released_at=local_trade['data']['released_at'],
-                                                      reference_code=local_trade['data']['reference_code'],
-                                                      contact_id=local_trade['data']['contact_id'],
-                                                      amount_rub=local_trade['data']['amount'],
-                                                      amount_btc=local_trade['data']['amount_btc'],
-                                                      fee_btc=local_trade['data']['fee_btc'],
-                                                      rate_rub=rate_rub,
-                                                      seller=local_trade['data']['seller']['username'],
-                                                      buyer=local_trade['data']['buyer']['username'],
-                                                      profit_rub_trade=profit_rub_trade,
-                                                      profit_rub_full=rate_rub - buy_rate,
-                                                      api_key_qiwi=my_trade.api_key_qiwi)
-                    self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
-                    my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
-                    my_trade.api_key_qiwi.save(updated_fileds=['limit_left'])
-
+                    self.make_new_deal(my_trade)
                     if self.send_second_message(my_trade):
                         my_trade.sent_second_message = True
                         my_trade.save(update_fields=['sent_second_message'])
                         if self.bot.switch_rev_send_sell:
                             if self.leave_review(my_trade):
-                                my_trade.left_review = True
-                                my_trade.save(update_fields=['left_review'])
                                 my_trade.delete()
+                                return True
                         else:
                             my_trade.delete()
+                            return True
