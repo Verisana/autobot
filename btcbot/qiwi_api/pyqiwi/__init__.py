@@ -7,10 +7,8 @@ See pyQiwi Documentation: pyqiwi.readthedocs.io
 """
 import datetime
 from functools import partial
-
-from requests.models import PreparedRequest
-
 from . import apihelper, types
+from requests.models import PreparedRequest
 
 
 class Wallet:

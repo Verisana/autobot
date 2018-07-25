@@ -1,10 +1,11 @@
+import gevent.monkey
 from decimal import *
 from celery import shared_task
-from btcbot.qiwi_api import pyqiwi
 from info_data.models import ReleasedTradesInfo
 from .models import APIKeyQiwi
 import telegram
 from btcbot.models import BotSetting, OpenTrades
+from btcbot.qiwi_api import pyqiwi
 
 
 @shared_task
