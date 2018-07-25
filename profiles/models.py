@@ -18,7 +18,6 @@ class APIKey(models.Model):
 class APIKeyQiwi(models.Model):
     name = models.CharField(max_length=64)
     api_key = models.CharField(max_length=32)
-    username = models.ForeignKey('Profile', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     phone_number = models.CharField(max_length=11)
     proxy = models.CharField(max_length=25, null=True, blank=True)
