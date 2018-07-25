@@ -3,7 +3,7 @@ from django.db import models
 
 class BotSetting(models.Model):
     name = models.CharField(max_length=64, unique=True)
-    api_key_qiwi = models.ManyToManyField('profiles.APIKeyQiwi')
+    api_key_qiwi = models.ManyToManyField('profiles.APIKeyQiwi', blank=True, null=True)
     buy_ad_settings = models.ForeignKey('btcbot.AdSetting',
                                         on_delete=models.CASCADE,
                                         related_name='buy_ad')
