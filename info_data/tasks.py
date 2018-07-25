@@ -38,37 +38,38 @@ def daily_report_handler(full=True):
     released_trades_24h = ReleasedTradesInfo.objects.filter(created_at__year=year,
                                                             created_at__month=month,
                                                             created_at__day=day)
-    for trades in released_trades_24h:
-        if trades.trade_type == 'ONLINE_SELL':
-            sum_sell_rub += trades.amount_rub
-            sum_sell_btc += (trades.amount_btc + trades.fee_btc)
-            num_trades_sell += 1
-            profit += trades.profit_rub_trade
-        elif trades.trade_type == 'ONLINE_BUY':
-            sum_buy_rub += trades.amount_rub
-            sum_buy_btc += (trades.amount_btc + trades.fee_btc)
-            num_trades_buy += 1
+    if released_trades_24h:
+        for trades in released_trades_24h:
+            if trades.trade_type == 'ONLINE_SELL':
+                sum_sell_rub += trades.amount_rub
+                sum_sell_btc += (trades.amount_btc + trades.fee_btc)
+                num_trades_sell += 1
+                profit += trades.profit_rub_trade
+            elif trades.trade_type == 'ONLINE_BUY':
+                sum_buy_rub += trades.amount_rub
+                sum_buy_btc += (trades.amount_btc + trades.fee_btc)
+                num_trades_buy += 1
 
-    if sum_sell_btc:
-        mean_sell_price = round(sum_sell_rub / sum_sell_btc, 2)
-    if sum_buy_btc:
-        mean_buy_price = round(sum_buy_rub / sum_buy_btc, 2)
+        if sum_sell_btc:
+            mean_sell_price = round(sum_sell_rub / sum_sell_btc, 2)
+        if sum_buy_btc:
+            mean_buy_price = round(sum_buy_rub / sum_buy_btc, 2)
 
-    text = '''Суточный отчет по торговле битками от {0}.{1}.{2}
-    
-Закуп:
-{3} - всего в рублях
-{4} - всего в битках
-{5} - средний курс
-{6} - количество сделок
+        text = '''Суточный отчет по торговле битками от {0}.{1}.{2}
         
-Продажи:
-{7} - всего в рублях
-{8} - всего в битках
-{9} - средний курс
-{10} - количество сделок
-        
-{11} - профит'''
-    message = text.format(day, month, year, sum_buy_rub, sum_buy_btc, mean_buy_price, num_trades_buy,
-                          sum_sell_rub, sum_sell_btc, mean_sell_price, num_trades_sell, profit)
-    telegram_bot.send_message(bot_set.telegram_bot_settings.chat_report, message)
+    Закуп:
+    {3} - всего в рублях
+    {4} - всего в битках
+    {5} - средний курс
+    {6} - количество сделок
+            
+    Продажи:
+    {7} - всего в рублях
+    {8} - всего в битках
+    {9} - средний курс
+    {10} - количество сделок
+            
+    {11} - профит'''
+        message = text.format(day, month, year, sum_buy_rub, sum_buy_btc, mean_buy_price, num_trades_buy,
+                              sum_sell_rub, sum_sell_btc, mean_sell_price, num_trades_sell, profit)
+        telegram_bot.send_message(bot_set.telegram_bot_settings.chat_report, message)

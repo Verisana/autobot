@@ -4,19 +4,21 @@ from btcbot.qiwi_api import pyqiwi
 from info_data.models import ReleasedTradesInfo
 from .models import APIKeyQiwi
 import telegram
-from btcbot.models import BotSetting
+from btcbot.models import BotSetting, OpenTrades
 
 
 @shared_task
 def qiwi_status_updater():
     qiwis = APIKeyQiwi.objects.filter(is_blocked=False)
-    for qiwi in qiwis:
-        wallet = pyqiwi.Wallet(token=qiwi.api_key,
-                               proxy=qiwi.proxy,
-                               number=qiwi.phone_number)
-        qiwi.balance = wallet.balance()
-        qiwi.is_blocked = wallet.profile.contract_info.blocked
-        qiwi.save(update_fields=['balance', 'is_blocked'])
+    trades = OpenTrades.objects.all()
+    if trades:
+        for qiwi in qiwis:
+            wallet = pyqiwi.Wallet(token=qiwi.api_key,
+                                   proxy=qiwi.proxy,
+                                   number=qiwi.phone_number)
+            qiwi.balance = wallet.balance()
+            qiwi.is_blocked = wallet.profile.contract_info.blocked
+            qiwi.save(update_fields=['balance', 'is_blocked'])
 
 
 @shared_task

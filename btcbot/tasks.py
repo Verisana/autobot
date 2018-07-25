@@ -66,30 +66,32 @@ def seller_bot_handler():
         seller.check_new_trades()
     trades = OpenTrades.objects.all()
 
-    for trade in trades:
-        if trade.disputed:
-            continue
-        if not trade.sent_first_message:
-            if seller.send_first_message(trade):
-                trade.sent_first_message = True
-                trade.save(update_fields=['sent_first_message'])
-        if not trade.paid:
-            if seller.check_payment(trade):
+    if trades:
+        for trade in trades:
+            if trade.disputed:
                 continue
-        if not trade.sent_second_message:
-            if seller.send_second_message(trade):
-                trade.sent_second_message = True
-                trade.save(update_fields=['sent_second_message'])
-        if not trade.left_review and bot.switch_rev_send_sell:
-            if seller.leave_review(trade):
+            if not trade.sent_first_message:
+                if seller.send_first_message(trade):
+                    trade.sent_first_message = True
+                    trade.save(update_fields=['sent_first_message'])
+            if not trade.paid:
+                if seller.check_payment(trade):
+                    continue
+            if not trade.sent_second_message:
+                if seller.send_second_message(trade):
+                    trade.sent_second_message = True
+                    trade.save(update_fields=['sent_second_message'])
+            if not trade.left_review and bot.switch_rev_send_sell:
+                if seller.leave_review(trade):
+                    trade.delete()
+            elif not bot.switch_rev_send_sell:
                 trade.delete()
-        elif not bot.switch_rev_send_sell:
-            trade.delete()
 
 @shared_task
 def open_trades_cleaner():
     bot = BotSetting.objects.get(name='Bot_QIWI')
     seller = LocalSellerBot(bot.id)
     trades = OpenTrades.objects.filter(disputed=True)
-    for trade in trades:
-        seller.check_dispute_result(trade)
+    if trades:
+        for trade in trades:
+            seller.check_dispute_result(trade)
