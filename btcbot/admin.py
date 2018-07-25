@@ -5,24 +5,6 @@ from .models import BotSetting, AdSetting, MeanBuyTrades, OpenTrades
 
 class BotSettingAdmin(admin.ModelAdmin):
     save_on_top = True
-    fields = ['name',
-              'switch_buy_ad_upd',
-              'switch_sell_ad_upd',
-              'switch_bot_buy',
-              'switch_bot_sell',
-              'switch_rev_send_sell',
-              'switch_rev_send_buy',
-              'target_profit',
-              'volume_min',
-              'volume_max',
-              'greetings_text',
-              'farewell_text',
-              'review_text',
-              'buy_ad_settings',
-              'sell_ad_settings',
-              'api_key_qiwi',
-              'telegram_bot_settings'
-             ]
     list_display = ['name',
                     'switch_buy_ad_upd',
                     'switch_sell_ad_upd',
@@ -30,12 +12,13 @@ class BotSettingAdmin(admin.ModelAdmin):
                     'switch_bot_sell',
                     'switch_rev_send_sell',
                     'switch_rev_send_buy',
+                    'switch_profit_fixator',
+                    'switch_qiwi_updater',
                     'target_profit',
                     'volume_min',
                     'volume_max',
                     'buy_ad_settings',
                     'sell_ad_settings',
-                    'telegram_bot_settings',
                     ]
     filter_horizontal = ['api_key_qiwi']
 
