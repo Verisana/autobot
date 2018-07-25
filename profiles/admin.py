@@ -12,11 +12,6 @@ class ProfileChangeForm(UserChangeForm):
 class ProfileAdmin(UserAdmin):
     form = ProfileChangeForm
 
-    fieldsets = UserAdmin.fieldsets + (
-        ('Addition', {'fields': ('email_confirmed', 'api_key')}),
-    )
-    filter_horizontal = UserAdmin.filter_horizontal + ('api_key',)
-
 
 class APIKeyAdmin(admin.ModelAdmin):
     # Include all fields except id and created_at
