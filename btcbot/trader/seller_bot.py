@@ -66,7 +66,7 @@ class LocalSellerBot():
             self._get_my_ad_info()
         self.bot.is_ad_visible = self.bot.switch_bot_sell
         self.bot.save(update_fields=['is_ad_visible'])
-        if bool(self.my_ad_info['data']['ad_list'][0]['data']['visible']) == self.bot.switch_bot_sell:
+        if bool(self.my_ad_info['data']['visible']) == self.bot.switch_bot_sell:
             pass
         else:
             self._ad_visible_edit(self.bot.switch_bot_sell)
@@ -78,21 +78,21 @@ class LocalSellerBot():
         for i in MeanBuyTrades.objects.all():
             btc_left_to_sell += i.btc_amount
         max_amount = self.bot.sell_ad_settings.stop_price * btc_left_to_sell
-        params = {'price_equation': self.my_ad_info['data']['ad_list'][0]['data']['price_equation'],
-                  'lat': self.my_ad_info['data']['ad_list'][0]['data']['lat'],
-                  'lon': self.my_ad_info['data']['ad_list'][0]['data']['lon'],
-                  'city': self.my_ad_info['data']['ad_list'][0]['data']['city'],
-                  'location_string': self.my_ad_info['data']['ad_list'][0]['data']['location_string'],
-                  'countrycode': self.my_ad_info['data']['ad_list'][0]['data']['countrycode'],
-                  'currency': self.my_ad_info['data']['ad_list'][0]['data']['currency'],
+        params = {'price_equation': str(self.ad_upd.stop_price),
+                  'lat': self.my_ad_info['data']['lat'],
+                  'lon': self.my_ad_info['data']['lon'],
+                  'city': self.my_ad_info['data']['city'],
+                  'location_string': self.my_ad_info['data']['location_string'],
+                  'countrycode': self.my_ad_info['data']['countrycode'],
+                  'currency': self.my_ad_info['data']['currency'],
                   'account_info': '',
-                  'bank_name': self.my_ad_info['data']['ad_list'][0]['data']['bank_name'],
-                  'msg': self.my_ad_info['data']['ad_list'][0]['data']['msg'],
-                  'sms_verification_required': self.my_ad_info['data']['ad_list'][0]['data']['sms_verification_required'],
-                  'track_max_amount': self.my_ad_info['data']['ad_list'][0]['data']['track_max_amount'],
-                  'require_trusted_by_advertiser': self.my_ad_info['data']['ad_list'][0]['data']['require_trusted_by_advertiser'],
-                  'require_identification': self.my_ad_info['data']['ad_list'][0]['data']['require_identification'],
-                  'min_amount': self.my_ad_info['data']['ad_list'][0]['data']['min_amount'],
+                  'bank_name': self.my_ad_info['data']['bank_name'],
+                  'msg': self.my_ad_info['data']['msg'],
+                  'sms_verification_required': self.my_ad_info['data']['sms_verification_required'],
+                  'track_max_amount': self.my_ad_info['data']['track_max_amount'],
+                  'require_trusted_by_advertiser': self.my_ad_info['data']['require_trusted_by_advertiser'],
+                  'require_identification': self.my_ad_info['data']['require_identification'],
+                  'min_amount': self.my_ad_info['data']['min_amount'],
                   'max_amount': str(round(max_amount, 0)),
                   'details-phone_number': '+0000000000',
                   'visible': visible}
