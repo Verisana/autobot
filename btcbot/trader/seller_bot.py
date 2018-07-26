@@ -78,7 +78,7 @@ class LocalSellerBot():
         for i in MeanBuyTrades.objects.all():
             btc_left_to_sell += i.btc_amount
         max_amount = self.bot.sell_ad_settings.stop_price * btc_left_to_sell
-        params = {'price_equation': str(self.ad_upd.stop_price),
+        params = {'price_equation': str(round(self.ad_upd.stop_price, 2)),
                   'lat': self.my_ad_info['data']['lat'],
                   'lon': self.my_ad_info['data']['lon'],
                   'city': self.my_ad_info['data']['city'],
