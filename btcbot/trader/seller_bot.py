@@ -25,8 +25,7 @@ class LocalSellerBot():
         if self.bot.switch_bot_sell:
             self.bot.switch_sell_ad_upd = True
             self.bot.save(update_fields=['switch_sell_ad_upd'])
-        if self.bot.is_ad_visible != self.bot.switch_bot_sell:
-            self._check_visibility()
+        self._check_visibility()
 
     def _get_my_ad_info(self):
         self.my_ad_info = self.lbtc.get_ad_info(self.bot.sell_ad_settings.ad_id).json()
@@ -64,10 +63,9 @@ class LocalSellerBot():
     def _check_visibility(self):
         if not self.my_ad_info:
             self._get_my_ad_info()
-        self.bot.is_ad_visible = self.bot.switch_bot_sell
-        self.bot.save(update_fields=['is_ad_visible'])
         if bool(self.my_ad_info['data']['visible']) == self.bot.switch_bot_sell:
-            pass
+            self.bot.is_ad_visible = self.bot.switch_bot_sell
+            self.bot.save(update_fields=['is_ad_visible'])
         else:
             self._ad_visible_edit(self.bot.switch_bot_sell)
 
@@ -96,7 +94,11 @@ class LocalSellerBot():
                   'max_amount': str(round(max_amount, 0)),
                   'details-phone_number': '+0000000000',
                   'visible': visible}
-        return self.lbtc.ad_edit(self.bot.sell_ad_settings.ad_id, params)
+        response = self.lbtc.ad_edit(self.bot.sell_ad_settings.ad_id, params)
+        if response.status_code == 200:
+            self.bot.is_ad_visible = visible
+            self.bot.save(update_fields=['is_ad_visible'])
+        return response
 
     def _reduce_buy_leftover(self, sold_btc):
         mbt = MeanBuyTrades.objects.all().order_by('created_at')
