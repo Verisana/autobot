@@ -19,7 +19,7 @@ class LocalSellerBot():
                                  proxy=proxy)
         self.qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
         self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token)
-        self.my_ad_info = self.bot.sell_ad_settings
+        self.my_ad_info = None
         self.opened_trades = None
         self.all_notifications = None
         if self.bot.switch_bot_sell:
@@ -221,7 +221,7 @@ class LocalSellerBot():
             for i in self.opened_trades['data']['contact_list']:
                 contact_id = i['data']['contact_id']
                 ad_id = i['data']['advertisement']['id']
-                if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.my_ad_info.ad_id:
+                if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.bot.sell_ad_settings.ad_id:
                     reference_text = self.reference_text.format(i['data']['reference_code'])
                     new_trade = OpenTrades.objects.create(trade_id=contact_id,
                                                           contragent=i['data']['buyer']['username'],
