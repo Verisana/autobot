@@ -13,6 +13,7 @@ class AdUpdateBot():
     def __init__(self, setting_id, proxy, sell_direction=True):
         self.bot = BotSetting.objects.get(id=setting_id)
         self.sell_direction = sell_direction
+        self.proxy = proxy
         self.lbtc = LocalBitcoin('', '')
         self.ad_info = None
         if self.sell_direction:
@@ -48,7 +49,7 @@ class AdUpdateBot():
         if self.sell_direction:
             n = 0
             while n < 9:
-                response = self.lbtc.get_sell_qiwi_ads(proxy)
+                response = self.lbtc.get_sell_qiwi_ads(self.proxy)
                 if response[0].status_code == 200 and response[1].status_code == 200:
                     self.ad_info = response[0].json()
                     if 'pagination' in self.ad_info:
@@ -59,7 +60,7 @@ class AdUpdateBot():
         else:
             n = 0
             while n < 9:
-                response = self.lbtc.get_buy_qiwi_ads(proxy)
+                response = self.lbtc.get_buy_qiwi_ads(self.proxy)
                 if response[0].status_code == 200 and response[1].status_code == 200:
                     self.ad_info = response[0].json()
                     if 'pagination' in self.ad_info:
