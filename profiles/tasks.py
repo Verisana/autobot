@@ -11,6 +11,7 @@ from btcbot.qiwi_api import pyqiwi
 def qiwi_status_updater():
     qiwis = APIKeyQiwi.objects.filter(is_blocked=False)
     bot_set = BotSetting.objects.get(name='Bot_QIWI')
+    telegram_bot = telegram.Bot(token=bot_set.telegram_bot_settings.token)
     if bot_set.switch_qiwi_updater:
         for qiwi in qiwis:
             wallet = pyqiwi.Wallet(token=qiwi.api_key,
@@ -18,6 +19,9 @@ def qiwi_status_updater():
                                    number=qiwi.phone_number)
             qiwi.balance = wallet.balance()
             qiwi.is_blocked = wallet.profile.contract_info.blocked
+            if qiwi.is_blocked:
+                message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
+                telegram_bot.send_message(bot_set.telegram_bot_settings.chat_emerg, message)
             qiwi.save(update_fields=['balance', 'is_blocked'])
 
 
@@ -36,26 +40,30 @@ def qiwi_limit_resetter():
 
 @shared_task
 def qiwi_profit_fixator():
-    qiwis = APIKeyQiwi.objects.all()
+    qiwis_profit = APIKeyQiwi.objects.filter(for_profit_fixation=True)
+
     bot_set = BotSetting.objects.get(name='Bot_QIWI')
     telegram_bot = telegram.Bot(token=bot_set.telegram_bot_settings.token)
     overall_profit = Decimal('0.0')
 
     if bot_set.switch_profit_fixator:
-        for qiwi in qiwis:
+        for qiwi in qiwis_profit:
             profit = Decimal('0.0')
             wallet = pyqiwi.Wallet(token=qiwi.api_key,
                                    proxy=qiwi.proxy,
                                    number=qiwi.phone_number)
-            trades = ReleasedTradesInfo.objects.filter(api_key_qiwi=qiwi)
-            for trade in trades:
-                if qiwi.is_blocked:
-                    trade.is_qiwi_blocked = True
-                    trade.save(update_fields=['is_qiwi_blocked'])
-                else:
-                    if trade.trade_type == 'ONLINE_SELL':
-                        profit += trade.profit_rub_trade
-
+            #workaround to choose current person and get all trades of all qiwi wallets
+            proxy = qiwi.proxy
+            qiwis_person = APIKeyQiwi.objects.filter(proxy=proxy)
+            for qiwi_person in qiwis_person:
+                trades = ReleasedTradesInfo.objects.filter(api_key_qiwi=qiwi_person)
+                for trade in trades:
+                    if qiwi.is_blocked:
+                        trade.is_qiwi_blocked = True
+                        trade.save(update_fields=['is_qiwi_blocked'])
+                    else:
+                        if trade.trade_type == 'ONLINE_SELL':
+                            profit += trade.profit_rub_trade
             if not qiwi.is_blocked and profit > 0:
                 response = wallet.send(pid=qiwi.pay_system, recipient=str(qiwi.bank_card), amount=profit)
                 if response.transaction.state == 'Accepted':

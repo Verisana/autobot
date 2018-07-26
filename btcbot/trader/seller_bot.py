@@ -9,7 +9,7 @@ import telegram
 
 
 class LocalSellerBot():
-    reference_text = 'Сделка на сайте LocalBitcoins.net #'
+    reference_text = '{0}'
 
     def __init__(self, setting_id, proxy=None):
         self.bot = BotSetting.objects.get(id=setting_id)
@@ -155,7 +155,7 @@ class LocalSellerBot():
             return False
 
     def leave_review(self, trade_obj):
-        response = self.lbtc.post_feedback_to_user(trade_obj.contragent, feedback='positive', message=self.bot.review_text)
+        response = self.lbtc.post_feedback_to_user(trade_obj.contragent, feedback='trust', message=self.bot.review_text)
         if response.status_code == 200:
             return True
         else:
@@ -220,7 +220,7 @@ class LocalSellerBot():
                 contact_id = i['data']['contact_id']
                 ad_id = i['data']['advertisement']['id']
                 if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.my_ad_info.ad_id:
-                    reference_text = self.reference_text + i['data']['reference_code']
+                    reference_text = self.reference_text.format(i['data']['reference_code'])
                     new_trade = OpenTrades.objects.create(trade_id=contact_id,
                                                           contragent=i['data']['buyer']['username'],
                                                           amount_rub=i['data']['amount'],

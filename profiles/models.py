@@ -30,6 +30,7 @@ class APIKeyQiwi(models.Model):
     balance = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     used_at = models.DateTimeField(blank=True, null=True)
     is_blocked = models.BooleanField(default=False)
+    for_profit_fixation = models.BooleanField(default=False)
     def __str__(self):
         return '{0}: {1}, {2}'.format(self.name, self.is_blocked, self.balance)
 
