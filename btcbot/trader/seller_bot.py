@@ -215,27 +215,28 @@ class LocalSellerBot():
         for i in MeanBuyTrades.objects.all():
             btc_left_to_sell += i.btc_amount
 
-        for i in self.opened_trades['data']['contact_list']:
-            contact_id = i['data']['contact_id']
-            ad_id = i['data']['advertisement']['id']
-            if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.my_ad_info.ad_id:
-                reference_text = self.reference_text + i['data']['reference_code']
-                new_trade = OpenTrades.objects.create(trade_id=contact_id,
-                                                      contragent=i['data']['buyer']['username'],
-                                                      amount_rub=i['data']['amount'],
-                                                      amount_btc=i['data']['amount_btc'],
-                                                      created_at=timezone.now(),
-                                                      reference_text=reference_text)
-                if self.send_first_message(new_trade):
-                    new_trade.sent_first_message = True
-                    new_trade.save(update_fields=['sent_first_message'])
+        if self.opened_trades:
+            for i in self.opened_trades['data']['contact_list']:
+                contact_id = i['data']['contact_id']
+                ad_id = i['data']['advertisement']['id']
+                if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.my_ad_info.ad_id:
+                    reference_text = self.reference_text + i['data']['reference_code']
+                    new_trade = OpenTrades.objects.create(trade_id=contact_id,
+                                                          contragent=i['data']['buyer']['username'],
+                                                          amount_rub=i['data']['amount'],
+                                                          amount_btc=i['data']['amount_btc'],
+                                                          created_at=timezone.now(),
+                                                          reference_text=reference_text)
+                    if self.send_first_message(new_trade):
+                        new_trade.sent_first_message = True
+                        new_trade.save(update_fields=['sent_first_message'])
 
-                for notification in self.all_notifications['data']:
-                    if notification['contact_id'] == contact_id:
-                        self.lbtc.mark_notification_as_read(str(notification['id']))
-                        break
-            if not i['data']['disputed_at']:
-                btc_opened_deals += (Decimal(i['data']['amount_btc']) + Decimal(i['data']['fee_btc']))
+                    for notification in self.all_notifications['data']:
+                        if notification['contact_id'] == contact_id:
+                            self.lbtc.mark_notification_as_read(str(notification['id']))
+                            break
+                if not i['data']['disputed_at']:
+                    btc_opened_deals += (Decimal(i['data']['amount_btc']) + Decimal(i['data']['fee_btc']))
         if btc_opened_deals > btc_left_to_sell:
             message = 'Открытые сделки превышают оставшийся лимит по биткам. Продажа остановлена. По открытым сделкам битки будут отпущены автоматически, как только поступит оплата.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
