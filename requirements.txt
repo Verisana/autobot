@@ -14,6 +14,7 @@ lxml==4.2.3
 python-telegram-bot==10.1.0
 pysocks==1.6.8
 requests-futures==0.9.7
+cython==0.28.4
 
 pytest==3.6.3
 pytest-runner==4.2

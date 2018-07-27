@@ -61,7 +61,7 @@ def ad_bot_runner():
 @shared_task
 def seller_bot_handler():
     bot = BotSetting.objects.get(name='Bot_QIWI')
-    seller = LocalSellerBot(bot.id)
+    seller = LocalSellerBot(bot.id, proxy='10.0.2.2:1080')
     if bot.switch_bot_sell:
         seller.check_new_trades()
     trades = OpenTrades.objects.all()
@@ -71,20 +71,14 @@ def seller_bot_handler():
             if trade.disputed:
                 continue
             if not trade.sent_first_message:
-                if seller.send_first_message(trade):
-                    trade.sent_first_message = True
-                    trade.save(update_fields=['sent_first_message'])
-            if not trade.paid:
-                if seller.check_payment(trade):
-                    continue
-            if not trade.sent_second_message:
-                if seller.send_second_message(trade):
-                    trade.sent_second_message = True
-                    trade.save(update_fields=['sent_second_message'])
-            if not trade.left_review and bot.switch_rev_send_sell:
-                if seller.leave_review(trade):
-                    trade.delete()
-            elif not bot.switch_rev_send_sell:
+                seller.send_first_message(trade)
+            if trade.sent_first_message and not trade.paid:
+                seller.check_payment(trade)
+            if trade.sent_first_message and trade.paid and not trade.sent_second_message:
+                seller.send_second_message(trade)
+            if trade.sent_first_message and trade.paid and trade.sent_second_message and bot.switch_rev_send_sell:
+                seller.leave_review(trade)
+            elif trade.sent_first_message and trade.paid and trade.sent_second_message and not bot.switch_rev_send_sell:
                 trade.delete()
 
 @shared_task

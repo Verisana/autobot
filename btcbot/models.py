@@ -80,7 +80,6 @@ class OpenTrades(models.Model):
     sent_first_message = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     sent_second_message = models.BooleanField(default=False)
-    left_review = models.BooleanField(default=False)
     disputed = models.BooleanField(default=False)
     def __str__(self):
         return 'Open trade #%d' % self.trade_id

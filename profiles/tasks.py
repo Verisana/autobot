@@ -22,7 +22,7 @@ def qiwi_status_updater():
             if qiwi.is_blocked:
                 message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
                 telegram_bot.send_message(bot_set.telegram_bot_settings.chat_emerg, message)
-            qiwi.save(update_fields=['balance', 'is_blocked'])
+            qiwi.save()
 
 
 @shared_task
@@ -32,10 +32,10 @@ def qiwi_limit_resetter():
     for qiwi in qiwis:
         if qiwi.is_blocked:
             qiwi.limit_left = 0
-            qiwi.save(update_fields=['limit_left'])
+            qiwi.save()
         else:
             qiwi.limit_left = bot_set.qiwi_limit
-            qiwi.save(update_fields=['limit_left'])
+            qiwi.save()
 
 
 @shared_task
@@ -60,7 +60,7 @@ def qiwi_profit_fixator():
                 for trade in trades:
                     if qiwi.is_blocked:
                         trade.is_qiwi_blocked = True
-                        trade.save(update_fields=['is_qiwi_blocked'])
+                        trade.save()
                     else:
                         if trade.trade_type == 'ONLINE_SELL':
                             profit += trade.profit_rub_trade
@@ -69,7 +69,7 @@ def qiwi_profit_fixator():
                 if response.transaction.state == 'Accepted':
                     for trade in trades:
                         trade.is_profit_fixated = True
-                        trade.save(update_fields=['is_profit_fixated'])
+                        trade.save()
                 else:
                     message = 'Не удалось вывести прибыль с киви в размере {1} руб. Проверьте статус платежа на киви: +{0}'.format(qiwi.phone_number, profit)
                     telegram_bot.send_message(bot_set.telegram_bot_settings.chat_emerg, message)

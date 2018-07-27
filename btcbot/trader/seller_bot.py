@@ -18,13 +18,11 @@ class LocalSellerBot():
                                  self.bot.sell_ad_settings.api_key.api_secret,
                                  proxy=proxy)
         self.qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
-        self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token)
+        pp = telegram.utils.request.Request(proxy_url='https://10.0.2.2:1080')
+        self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token, request=pp)
         self.my_ad_info = None
         self.opened_trades = None
         self.all_notifications = None
-        if self.bot.switch_bot_sell:
-            self.bot.switch_sell_ad_upd = True
-            self.bot.save(update_fields=['switch_sell_ad_upd'])
         self._check_visibility()
 
     def _get_my_ad_info(self):
@@ -52,20 +50,20 @@ class LocalSellerBot():
             message = 'Дневные лимиты по киви кошелькам сожжены. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
-            self.bot.save(update_fields=['switch_bot_sell'])
+            self.bot.save()
             return self.qiwi_list.order_by('-limit_left')[0]
         else:
             message = 'Все киви кошельки заблокированы. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
-            self.bot.save(update_fields=['switch_bot_sell'])
+            self.bot.save()
 
     def _check_visibility(self):
         if not self.my_ad_info:
             self._get_my_ad_info()
         if bool(self.my_ad_info['data']['ad_list'][0]['data']['visible']) == self.bot.switch_bot_sell:
             self.bot.is_ad_visible = self.bot.switch_bot_sell
-            self.bot.save(update_fields=['is_ad_visible'])
+            self.bot.save()
         else:
             self._ad_visible_edit(self.bot.switch_bot_sell)
 
@@ -97,7 +95,11 @@ class LocalSellerBot():
         response = self.lbtc.ad_edit(self.bot.sell_ad_settings.ad_id, params)
         if response.status_code == 200:
             self.bot.is_ad_visible = visible
-            self.bot.save(update_fields=['is_ad_visible'])
+            self.bot.save()
+        elif response.status_code == 400:
+            if response.json()['error']['error_code'] == 45:
+                message = 'Слишком большое изменение цены. Объявление принудительно остановлено. Выключите бота на 10 минут и попробуйте снова'
+                self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
         return response
 
     def _reduce_buy_leftover(self, sold_btc):
@@ -106,7 +108,7 @@ class LocalSellerBot():
             difference = trade.btc_amount - sold_btc
             if difference > 0:
                 trade.btc_amount = difference
-                trade.save(update_fields='btc_amount')
+                trade.save()
                 return None
             elif difference == 0:
                 trade.delete()
@@ -117,17 +119,19 @@ class LocalSellerBot():
                     trade.delete()
                 else:
                     trade.btc_amount = 0
-                    trade.save(update_fields=['btc_amount'])
+                    trade.save()
 
         if self.bot.switch_bot_sell:
             message = 'Все битки проданы. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
-            self.bot.save(update_fields=['switch_bot_sell'])
+            self.bot.save()
 
     def _release_btc(self, trade_obj):
         response = self.lbtc.contact_release(str(trade_obj.trade_id))
         if response.status_code == 200:
+            trade_obj.paid = True
+            trade_obj.save()
             return True
         else:
             return False
@@ -144,7 +148,8 @@ class LocalSellerBot():
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), message)
         if response.status_code == 200:
             trade_obj.api_key_qiwi = qiwi
-            trade_obj.save(update_fields=['api_key_qiwi'])
+            trade_obj.sent_first_message = True
+            trade_obj.save()
             return True
         else:
             return False
@@ -152,6 +157,8 @@ class LocalSellerBot():
     def send_second_message(self, trade_obj):
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), self.bot.farewell_text)
         if response.status_code == 200:
+            trade_obj.sent_second_message = True
+            trade_obj.save()
             return True
         else:
             return False
@@ -159,6 +166,7 @@ class LocalSellerBot():
     def leave_review(self, trade_obj):
         response = self.lbtc.post_feedback_to_user(trade_obj.contragent, feedback='trust', message=self.bot.review_text)
         if response.status_code == 200:
+            trade_obj.delete()
             return True
         else:
             return False
@@ -204,7 +212,7 @@ class LocalSellerBot():
                                           api_key_qiwi=my_trade.api_key_qiwi)
         self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
-        my_trade.api_key_qiwi.save(update_fileds=['limit_left'])
+        my_trade.api_key_qiwi.save()
         my_trade.delete()
 
     def check_new_trades(self):
@@ -212,8 +220,8 @@ class LocalSellerBot():
             self._get_opened_trades()
         if not self._get_all_notifications():
             self._get_all_notifications()
-        btc_left_to_sell = Decimal('0')
-        btc_opened_deals = Decimal('0')
+        btc_left_to_sell = Decimal('0.0')
+        btc_opened_deals = Decimal('0.0')
         for i in MeanBuyTrades.objects.all():
             btc_left_to_sell += i.btc_amount
 
@@ -229,9 +237,8 @@ class LocalSellerBot():
                                                           amount_btc=i['data']['amount_btc'],
                                                           created_at=timezone.now(),
                                                           reference_text=reference_text)
-                    if self.send_first_message(new_trade):
-                        new_trade.sent_first_message = True
-                        new_trade.save(update_fields=['sent_first_message'])
+                    if not new_trade.sent_first_message:
+                        self.send_first_message(new_trade)
 
                     for notification in self.all_notifications['data']:
                         if notification['contact_id'] == contact_id:
@@ -243,14 +250,21 @@ class LocalSellerBot():
             message = 'Открытые сделки превышают оставшийся лимит по биткам. Продажа остановлена. По открытым сделкам битки будут отпущены автоматически, как только поступит оплата.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
-            self.bot.save(update_fields=['switch_bot_sell'])
+            self.bot.save()
 
 
     def check_payment(self, my_trade):
         wallet = pyqiwi.Wallet(token=my_trade.api_key_qiwi.api_key,
                                proxy=my_trade.api_key_qiwi.proxy,
                                number=my_trade.api_key_qiwi.phone_number)
-        payments = wallet.history(operation='IN', start_date=my_trade.created_at, end_date=timezone.now())
+        my_trade.api_key_qiwi.balance = wallet.balance()
+        my_trade.api_key_qiwi.is_blocked = wallet.profile.contract_info.blocked
+        my_trade.api_key_qiwi.save()
+        if my_trade.api_key_qiwi.is_blocked:
+            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance)
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+
+        payments = wallet.history(operation='IN', start_date=my_trade.created_at, end_date=timezone.now().astimezone())
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
             return None
@@ -261,22 +275,21 @@ class LocalSellerBot():
             message = 'По сделке №{0} открыт диспут {1}'.format(my_trade.id, local_trade['data']['disputed_at'])
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             my_trade.disputed = True
-            my_trade.save(update_fields=['disputed'])
+            my_trade.save()
             return None
-        for payment in payments['transactions']:
-            if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
-                    and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
-                if self._release_btc(my_trade):
-                    my_trade.paid = True
-                    my_trade.save(update_fields=['paid'])
+
+        if local_trade['data']['payment_completed_at']:
+            for payment in payments['transactions']:
+                if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
+                        and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
+                    self._release_btc(my_trade)
                     self.make_new_deal(my_trade)
-                    if self.send_second_message(my_trade):
-                        my_trade.sent_second_message = True
-                        my_trade.save(update_fields=['sent_second_message'])
+                    if not my_trade.sent_second_message:
+                        self.send_second_message(my_trade)
                         if self.bot.switch_rev_send_sell:
                             if self.leave_review(my_trade):
-                                my_trade.delete()
                                 return True
                         else:
                             my_trade.delete()
                             return True
+                    break
