@@ -61,7 +61,7 @@ def ad_bot_runner():
 @shared_task
 def seller_bot_handler():
     bot = BotSetting.objects.get(name='Bot_QIWI')
-    seller = LocalSellerBot(bot.id, proxy='10.0.2.2:1080')
+    seller = LocalSellerBot(bot.id)
     if bot.switch_bot_sell:
         seller.check_new_trades()
     trades = OpenTrades.objects.all()
