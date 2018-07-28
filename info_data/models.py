@@ -20,5 +20,6 @@ class ReleasedTradesInfo(models.Model):
     api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE)
     is_profit_fixated = models.BooleanField(default=False)
     is_qiwi_blocked = models.BooleanField(default=False)
+    disputed=models.BooleanField(default=False)
     def __str__(self):
         return '%d' % self.ad_id

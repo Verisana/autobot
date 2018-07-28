@@ -179,12 +179,12 @@ class LocalSellerBot():
         if local_trade['data']['released_at']:
             message = 'Спор по сделке №{0} завершился отпуском битков. Проверьте, поступила ли оплата. Если нет, то сделку надо удалить из системы'.format(my_trade.trade_id)
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-            self.make_new_deal(my_trade)
+            self.make_new_deal(my_trade, disputed=True)
             my_trade.delete()
         elif local_trade['data']['closed_at']:
             my_trade.delete()
 
-    def make_new_deal(self, my_trade):
+    def make_new_deal(self, my_trade, disputed=False):
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
             return False
@@ -209,7 +209,8 @@ class LocalSellerBot():
                                           buyer=local_trade['data']['buyer']['username'],
                                           profit_rub_trade=profit_rub_trade,
                                           profit_rub_full=rate_rub - buy_rate,
-                                          api_key_qiwi=my_trade.api_key_qiwi)
+                                          api_key_qiwi=my_trade.api_key_qiwi,
+                                          disputed=disputed)
         self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
         my_trade.api_key_qiwi.save()
@@ -244,6 +245,7 @@ class LocalSellerBot():
                         if notification['contact_id'] == contact_id:
                             self.lbtc.mark_notification_as_read(str(notification['id']))
                             break
+
                 if not i['data']['disputed_at']:
                     btc_opened_deals += (Decimal(i['data']['amount_btc']) + Decimal(i['data']['fee_btc']))
         if btc_opened_deals > btc_left_to_sell:
