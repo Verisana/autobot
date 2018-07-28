@@ -18,7 +18,7 @@ class LocalSellerBot():
                                  self.bot.sell_ad_settings.api_key.api_secret,
                                  proxy=proxy)
         self.qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
-        self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token, request=pp)
+        self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token)
         self.my_ad_info = None
         self.opened_trades = None
         self.all_notifications = None
