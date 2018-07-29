@@ -241,7 +241,6 @@ class LocalSellerBot():
         self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
         my_trade.api_key_qiwi.save()
-        my_trade.delete()
 
     def check_new_trades(self):
         if not self.opened_trades:
@@ -327,7 +326,7 @@ class LocalSellerBot():
                     if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub:
                         message = 'Поступил платеж от {0}, похожий на оплату, в размере {1} руб. с номера {2} по сделке {3} на наш кошелек +{4}. \
                         Если платеж верный, отпустите битки. Я этим заниматься не буду. После чего поставьте галочку \
-                        paid и уберите need_help'.format(payment.date.astimezone().isoformat(), payment.sum.amount,
+                        paid и sent_second_message'.format(payment.date.astimezone().isoformat(), payment.sum.amount,
                                                          payment.account, my_trade.trade_id, my_trade.api_key_qiwi.phone_number)
                         self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
                         my_trade.need_help = True
