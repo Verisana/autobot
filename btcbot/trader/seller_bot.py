@@ -312,18 +312,20 @@ class LocalSellerBot():
 
         if local_trade['data']['payment_completed_at'] and payments['transactions']:
             for payment in payments['transactions']:
-                if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
-                        and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
-                    self._release_btc(my_trade)
-                    self.make_new_deal(my_trade)
-                    if not my_trade.sent_second_message:
-                        self.send_second_message(my_trade)
-                        if self.bot.switch_rev_send_sell:
-                            if self.leave_review(my_trade):
-                                return True
-                    break
-                elif payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub \
-                        and not local_trade['data']['released_at']:
+                if payment.comment:
+                    if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
+                            and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
+                        self._release_btc(my_trade)
+                        self.make_new_deal(my_trade)
+                        if not my_trade.sent_second_message:
+                            self.send_second_message(my_trade)
+                            if self.bot.switch_rev_send_sell:
+                                if self.leave_review(my_trade):
+                                    return True
+                        break
+                else:
+                    if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub \
+                                and not local_trade['data']['released_at']:
                     message = 'Поступил платеж от {0}, похожий на оплату, в размере {1} руб. с номера {2} по сделке {3} на наш кошелек +{4}. \
                     Если платеж верный, отпустите битки. Я этим заниматься не буду. После чего поставьте галочку \
                     paid и уберите need_help'.format(payment.date.date.astimezone().isoformat(), payment.sum.amount,
