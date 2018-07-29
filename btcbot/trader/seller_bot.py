@@ -96,6 +96,8 @@ class LocalSellerBot():
         if response.status_code == 200:
             self.bot.is_ad_visible = visible
             self.bot.save()
+            if not visible:
+                self.check_new_trades()
         elif response.status_code == 400:
             if response.json()['error']['error_code'] == 45:
                 message = 'Слишком большое изменение цены. Объявление принудительно остановлено. Выключите бота на 10 минут и попробуйте снова'

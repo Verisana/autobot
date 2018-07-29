@@ -67,7 +67,6 @@ def seller_bot_handler():
     trades = OpenTrades.objects.all()
 
     if trades:
-        seller.check_new_trades()
         for trade in trades:
             if trade.disputed or trade.api_key_qiwi.is_blocked or trade.need_help:
                 if trade.need_help and trade.paid and trade.sent_second_message:
