@@ -17,12 +17,12 @@ class LocalSellerBot():
         self.lbtc = LocalBitcoin(self.bot.sell_ad_settings.api_key.api_key,
                                  self.bot.sell_ad_settings.api_key.api_secret,
                                  proxy=proxy)
-        self.qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
         self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token)
         self.my_ad_info = None
         self.opened_trades = None
         self.all_notifications = None
-        self._check_visibility()
+        if self.bot.is_ad_visible != self.bot.switch_bot_sell:
+            self._check_visibility()
 
     def _get_my_ad_info(self):
         self.my_ad_info = self.lbtc.get_ad_info(self.bot.sell_ad_settings.ad_id).json()
@@ -41,8 +41,9 @@ class LocalSellerBot():
         self.all_notifications = self.lbtc.get_all_notifications().json()
 
     def _get_appropriate_qiwi(self, deal_price):
-        if self.qiwi_list:
-            for qiwi in self.qiwi_list:
+        qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
+        if qiwi_list:
+            for qiwi in qiwi_list:
                 balance = qiwi.limit_left - Decimal(deal_price)
                 if balance > 0:
                     return qiwi
@@ -50,7 +51,7 @@ class LocalSellerBot():
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
             self.bot.save()
-            return self.qiwi_list.order_by('-limit_left')[0]
+            return qiwi_list.order_by('-limit_left')[0]
         else:
             message = 'Все киви кошельки заблокированы. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
@@ -141,14 +142,41 @@ class LocalSellerBot():
                 return True
         return False
 
+    def _check_qiwi_status(self, qiwi):
+        wallet = pyqiwi.Wallet(token=qiwi.api_key,
+                               proxy=qiwi.proxy,
+                               number=qiwi.phone_number)
+        qiwi.balance = wallet.balance()
+        qiwi.is_blocked = wallet.profile.contract_info.blocked
+        qiwi.save()
+        if qiwi.is_blocked:
+            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+
     def send_first_message(self, trade_obj):
-        qiwi = self._get_appropriate_qiwi(trade_obj.amount_rub)
+        available_qiwi = len(self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at'))
+        n = 0
+        while n < available_qiwi:
+            qiwi = self._get_appropriate_qiwi(trade_obj.amount_rub)
+            self._check_qiwi_status(qiwi)
+            if not qiwi.is_blocked:
+                break
+            n += 1
+            if n == available_qiwi:
+                message = 'Все киви кошельки заблокированы. Продажа остановлена.'
+                self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+                self.bot.switch_bot_sell = False
+                self.bot.save()
+                return None
+
         message = self.bot.greetings_text.format(qiwi.phone_number, trade_obj.reference_text)
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), message)
         if response.status_code == 200:
             trade_obj.api_key_qiwi = qiwi
             trade_obj.sent_first_message = True
             trade_obj.save()
+            qiwi.used_at = timezone.now()
+            qiwi.save()
             return True
         else:
             return False
@@ -262,8 +290,11 @@ class LocalSellerBot():
         my_trade.api_key_qiwi.is_blocked = wallet.profile.contract_info.blocked
         my_trade.api_key_qiwi.save()
         if my_trade.api_key_qiwi.is_blocked:
-            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance)
+            message = 'Киви кошелек +{0} блокнут. Баланс: {1}. Нужна помощь по открытой сделке {2}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance, my_trade.trade_id)
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+            self.bot.need_help = True
+            self.bot.save()
+            return None
 
         payments = wallet.history(operation='IN', start_date=my_trade.created_at, end_date=timezone.now().astimezone())
         local_trade = self._get_specific_trade(my_trade.trade_id)
@@ -290,7 +321,13 @@ class LocalSellerBot():
                         if self.bot.switch_rev_send_sell:
                             if self.leave_review(my_trade):
                                 return True
-                        else:
-                            my_trade.delete()
-                            return True
                     break
+                elif payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub \
+                        and not local_trade['data']['released_at']:
+                    message = 'Поступил платеж от {0}, похожий на оплату, в размере {1} руб. с номера {2} по сделке {3} на наш кошелек +{4}. \
+                    Если платеж верный, отпустите битки. Я этим заниматься не буду. После чего поставьте галочку \
+                    paid и уберите need_help'.format(payment.date.date.astimezone().isoformat(), payment.sum.amount,
+                                                     payment.account, my_trade.trade_id, my_trade.api_key_qiwi.phone_number)
+                    self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+                    my_trade.need_help = True
+                    my_trade.save()

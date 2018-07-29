@@ -68,7 +68,7 @@ def seller_bot_handler():
 
     if trades:
         for trade in trades:
-            if trade.disputed:
+            if trade.disputed or trade.api_key_qiwi.is_blocked or trade.need_help:
                 continue
             if not trade.sent_first_message:
                 seller.send_first_message(trade)

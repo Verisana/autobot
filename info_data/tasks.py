@@ -29,17 +29,18 @@ def daily_report_handler(full=True):
     bot_set = BotSetting.objects.get(name='Bot_QIWI')
     telegram_bot = telegram.Bot(token=bot_set.telegram_bot_settings.token)
 
-    year = timezone.now().year
-    month = timezone.now().month
+    year = timezone.now().astimezone().year
+    month = timezone.now().astimezone().month
     if full:
-        day = timezone.now().day - 1
+        day = timezone.now().astimezone().day - 1
     else:
-        day = timezone.now().day
+        day = timezone.now().astimezone().day
 
     released_trades_24h = ReleasedTradesInfo.objects.filter(created_at__year=year,
                                                             created_at__month=month,
                                                             created_at__day=day)
     if released_trades_24h:
+        profit = Decimal('0.0')
         for trades in released_trades_24h:
             if trades.trade_type == 'ONLINE_SELL':
                 sum_sell_rub += trades.amount_rub

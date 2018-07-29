@@ -24,7 +24,6 @@ def qiwi_status_updater():
                 telegram_bot.send_message(bot_set.telegram_bot_settings.chat_emerg, message)
             qiwi.save()
 
-
 @shared_task
 def qiwi_limit_resetter():
     bot_set = BotSetting.objects.get(name='Bot_QIWI')

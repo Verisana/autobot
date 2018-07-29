@@ -128,9 +128,6 @@ CELERY_BEAT_SCHEDULE = {
     'open_trades_cleaner': {
         'task': 'btcbot.tasks.open_trades_cleaner',
         'schedule': 3600.0},
-    'qiwi_status_updater': {
-        'task': 'profiles.tasks.qiwi_status_updater',
-        'schedule': 3600.0},
 }
 
 CELERY_TASK_ROUTES = {'btcbot.tasks.ad_bot_runner': {'queue': 'ad_bot_runner'},
