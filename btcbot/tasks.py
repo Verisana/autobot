@@ -82,9 +82,12 @@ def seller_bot_handler():
             if not trade.sent_first_message:
                 seller.send_first_message(trade)
             if trade.sent_first_message and not trade.paid:
-                seller.check_payment(trade)
+                result = seller.check_payment(trade)
+                if result:
+                    continue
             if trade.sent_first_message and trade.paid and not trade.sent_second_message:
                 seller.send_second_message(trade)
+
             if trade.sent_first_message and trade.paid and trade.sent_second_message and bot.switch_rev_send_sell:
                 seller.leave_review(trade)
             elif trade.sent_first_message and trade.paid and trade.sent_second_message and not bot.switch_rev_send_sell:
