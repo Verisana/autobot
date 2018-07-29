@@ -314,7 +314,7 @@ class LocalSellerBot():
             for payment in payments['transactions']:
                 if payment.comment:
                     if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
-                            and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
+                            and payment.sum.amount == my_trade.amount_rub:
                         self._release_btc(my_trade)
                         self.make_new_deal(my_trade)
                         if not my_trade.sent_second_message:
@@ -324,8 +324,7 @@ class LocalSellerBot():
                                     return True
                         break
                 else:
-                    if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub \
-                                and not local_trade['data']['released_at']:
+                    if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub:
                         message = 'Поступил платеж от {0}, похожий на оплату, в размере {1} руб. с номера {2} по сделке {3} на наш кошелек +{4}. \
                         Если платеж верный, отпустите битки. Я этим заниматься не буду. После чего поставьте галочку \
                         paid и уберите need_help'.format(payment.date.date.astimezone().isoformat(), payment.sum.amount,
