@@ -73,8 +73,10 @@ def seller_bot_handler():
                     seller.make_new_deal(trade)
                     if bot.switch_rev_send_sell:
                         seller.leave_review(trade)
+                        continue
                     else:
                         trade.delete()
+                        continue
                 else:
                     continue
             if not trade.sent_first_message:
