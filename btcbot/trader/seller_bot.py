@@ -310,7 +310,7 @@ class LocalSellerBot():
             my_trade.save()
             return None
 
-        if local_trade['data']['payment_completed_at']:
+        if payments['transactions']:
             for payment in payments['transactions']:
                 if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
                         and payment.sum.amount == my_trade.amount_rub and not local_trade['data']['released_at']:
