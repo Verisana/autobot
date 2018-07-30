@@ -312,7 +312,7 @@ class LocalSellerBot():
             my_trade.delete()
             return True
         if local_trade['data']['disputed_at']:
-            message = 'По сделке №{0} открыт диспут {1}'.format(my_trade.id, local_trade['data']['disputed_at'])
+            message = 'По сделке №{0} открыт диспут {1}'.format(my_trade.trade_id, local_trade['data']['disputed_at'])
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             my_trade.disputed = True
             my_trade.save()
@@ -337,7 +337,7 @@ class LocalSellerBot():
                     if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub:
                         message = 'Поступил платеж от {0}, похожий на оплату, в размере {1} руб. с номера {2} по сделке {3} на наш кошелек +{4}. \
                         Если платеж верный, отпустите битки. Я этим заниматься не буду. После чего поставьте галочку \
-                        paid и sent_second_message'.format(payment.date.astimezone().isoformat(), payment.sum.amount,
+                        paid и sent_second_message'.format(payment.date.astimezone().strftime('%Y-%m-%d %H:%M:%S'), payment.sum.amount,
                                                          payment.account, my_trade.trade_id, my_trade.api_key_qiwi.phone_number)
                         self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
                         my_trade.need_help = True
