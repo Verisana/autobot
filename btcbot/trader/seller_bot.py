@@ -4,7 +4,7 @@ from btcbot.trader.local_api import LocalBitcoin
 from btcbot.trader.ad_bot import AdUpdateBot
 from btcbot.qiwi_api import pyqiwi
 from btcbot.models import BotSetting, OpenTrades, MeanBuyTrades
-from info_data.models import ReleasedTradesInfo
+from info_data.models import ReleasedTradesInfo, UsedTransactions
 import telegram
 
 
@@ -129,11 +129,12 @@ class LocalSellerBot():
             self.bot.switch_bot_sell = False
             self.bot.save()
 
-    def _release_btc(self, trade_obj):
+    def _release_btc(self, trade_obj, transaction_id):
         response = self.lbtc.contact_release(str(trade_obj.trade_id))
         if response.status_code == 200:
             trade_obj.paid = True
             trade_obj.save()
+            UsedTransactions.objects.create(transaction_id=transaction_id)
             return True
         else:
             return False
@@ -154,6 +155,13 @@ class LocalSellerBot():
         if qiwi.is_blocked:
             message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+
+    def _is_used_transactions(self, payment):
+        transactions = UsedTransactions.objects.all()
+        for transaction in transactions:
+            if transaction.transaction_id == payment.txn_id:
+                return True
+        return False
 
     def send_first_message(self, trade_obj):
         available_qiwi = len(self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at'))
@@ -296,7 +304,6 @@ class LocalSellerBot():
             self.bot.need_help = True
             self.bot.save()
             return None
-
         payments = wallet.history(operation='IN', start_date=my_trade.created_at, end_date=timezone.now().astimezone())
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
@@ -313,10 +320,12 @@ class LocalSellerBot():
 
         if local_trade['data']['payment_completed_at'] and payments['transactions']:
             for payment in payments['transactions']:
+                if self._is_used_transactions(payment):
+                    continue
                 if payment.comment:
                     if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
                             and payment.sum.amount == my_trade.amount_rub:
-                        self._release_btc(my_trade)
+                        self._release_btc(my_trade, payment.txn_id)
                         self.make_new_deal(my_trade)
                         if not my_trade.sent_second_message:
                             self.send_second_message(my_trade)

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ReleasedTradesInfo
+from .models import ReleasedTradesInfo, UsedTransactions
 
 
 class ReleasedTradesInfoAdmin(admin.ModelAdmin):
@@ -10,4 +10,11 @@ class ReleasedTradesInfoAdmin(admin.ModelAdmin):
     save_on_top = True
 
 
+class UsedTransactionsAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in UsedTransactions._meta.fields if field.name != 'id']
+    save_on_top = True
+    date_hierarchy = 'created_at'
+
+
 admin.site.register(ReleasedTradesInfo, ReleasedTradesInfoAdmin)
+admin.site.register(UsedTransactions, UsedTransactionsAdmin)

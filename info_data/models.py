@@ -23,3 +23,9 @@ class ReleasedTradesInfo(models.Model):
     disputed=models.BooleanField(default=False)
     def __str__(self):
         return '%d' % self.ad_id
+
+class UsedTransactions(models.Model):
+    transaction_id = models.IntegerField()
+    created_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return '%d' % self.transaction_id

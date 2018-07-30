@@ -13,7 +13,6 @@ class BotSettingAdmin(admin.ModelAdmin):
                     'switch_rev_send_sell',
                     'switch_rev_send_buy',
                     'switch_profit_fixator',
-                    'switch_qiwi_updater',
                     'target_profit',
                     'volume_min',
                     'volume_max',

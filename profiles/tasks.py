@@ -1,6 +1,6 @@
 from decimal import *
 from celery import shared_task
-from info_data.models import ReleasedTradesInfo
+from info_data.models import ReleasedTradesInfo, UsedTransactions
 from .models import APIKeyQiwi
 import telegram
 from btcbot.models import BotSetting, OpenTrades
@@ -12,22 +12,23 @@ def qiwi_status_updater():
     qiwis = APIKeyQiwi.objects.filter(is_blocked=False)
     bot_set = BotSetting.objects.get(name='Bot_QIWI')
     telegram_bot = telegram.Bot(token=bot_set.telegram_bot_settings.token)
-    if bot_set.switch_qiwi_updater:
-        for qiwi in qiwis:
-            wallet = pyqiwi.Wallet(token=qiwi.api_key,
-                                   proxy=qiwi.proxy,
-                                   number=qiwi.phone_number)
-            qiwi.balance = wallet.balance()
-            qiwi.is_blocked = wallet.profile.contract_info.blocked
-            if qiwi.is_blocked:
-                message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
-                telegram_bot.send_message(bot_set.telegram_bot_settings.chat_emerg, message)
-            qiwi.save()
+    for qiwi in qiwis:
+        wallet = pyqiwi.Wallet(token=qiwi.api_key,
+                               proxy=qiwi.proxy,
+                               number=qiwi.phone_number)
+        qiwi.balance = wallet.balance()
+        qiwi.is_blocked = wallet.profile.contract_info.blocked
+        if qiwi.is_blocked:
+            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
+            telegram_bot.send_message(bot_set.telegram_bot_settings.chat_emerg, message)
+        qiwi.save()
 
 @shared_task
 def qiwi_limit_resetter():
     bot_set = BotSetting.objects.get(name='Bot_QIWI')
     qiwis = APIKeyQiwi.objects.all()
+    transactions = UsedTransactions.objects.all().order_by('-created_at')
+
     for qiwi in qiwis:
         if qiwi.is_blocked:
             qiwi.limit_left = 0
@@ -35,6 +36,10 @@ def qiwi_limit_resetter():
         else:
             qiwi.limit_left = bot_set.qiwi_limit
             qiwi.save()
+
+    if len(transactions) > 100:
+        for transaction in transactions[100:]:
+            transactions.delete()
 
 
 @shared_task
