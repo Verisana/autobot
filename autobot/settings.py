@@ -124,7 +124,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 15.0},
     'daily_routines': {
         'task': 'info_data.tasks.daily_routine_starter',
-        'schedule': crontab(minute='0', hour='0')},
+        'schedule': crontab(minute=0, hour=0)},
     'open_trades_cleaner': {
         'task': 'btcbot.tasks.open_trades_cleaner',
         'schedule': 3600.0},
