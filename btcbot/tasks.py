@@ -69,7 +69,7 @@ def seller_bot_handler():
     if trades:
         for trade in trades:
             if not trade.api_key_qiwi:
-                trade.api_key_qiwi = seller.set_unused_qiwi()
+                trade.api_key_qiwi = seller.set_unused_qiwi(trade)
                 trade.save()
                 if not trade.api_key_qiwi:
                     continue

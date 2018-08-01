@@ -163,7 +163,7 @@ class LocalSellerBot():
                 return True
         return False
 
-    def set_unused_qiwi(self):
+    def set_unused_qiwi(self, trade_obj):
         available_qiwi = len(self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at'))
         n = 0
         while n < available_qiwi:
