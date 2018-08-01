@@ -182,15 +182,13 @@ class LocalSellerBot():
                 return None
 
     def send_first_message(self, trade_obj):
-        qiwi = self.set_unused_qiwi(trade_obj)
-        message = self.bot.greetings_text.format(qiwi.phone_number, trade_obj.reference_text)
+        message = self.bot.greetings_text.format(trade_obj.api_key_qiwi.phone_number, trade_obj.reference_text)
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), message)
         if response.status_code == 200:
-            trade_obj.api_key_qiwi = qiwi
             trade_obj.sent_first_message = True
             trade_obj.save()
-            qiwi.used_at = timezone.now()
-            qiwi.save()
+            trade_obj.api_key_qiwi.used_at = timezone.now()
+            trade_obj.api_key_qiwi.save()
             return True
         else:
             return False
@@ -278,6 +276,8 @@ class LocalSellerBot():
                                                           amount_btc=i['data']['amount_btc'],
                                                           created_at=timezone.now(),
                                                           reference_text=reference_text)
+                    new_trade.api_key_qiwi = self.set_unused_qiwi(new_trade)
+                    new_trade.save()
                     if not new_trade.sent_first_message:
                         self.send_first_message(new_trade)
 
