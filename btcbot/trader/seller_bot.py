@@ -163,14 +163,14 @@ class LocalSellerBot():
                 return True
         return False
 
-    def send_first_message(self, trade_obj):
+    def set_unused_qiwi(self):
         available_qiwi = len(self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at'))
         n = 0
         while n < available_qiwi:
             qiwi = self._get_appropriate_qiwi(trade_obj.amount_rub)
             self._check_qiwi_status(qiwi)
             if not qiwi.is_blocked:
-                break
+                return qiwi
             n += 1
             if n == available_qiwi:
                 message = 'Все киви кошельки заблокированы. Продажа остановлена.'
@@ -179,6 +179,8 @@ class LocalSellerBot():
                 self.bot.save()
                 return None
 
+    def send_first_message(self, trade_obj):
+        qiwi = self.set_unused_qiwi()
         message = self.bot.greetings_text.format(qiwi.phone_number, trade_obj.reference_text)
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), message)
         if response.status_code == 200:
