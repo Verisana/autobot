@@ -24,6 +24,7 @@ class BotSetting(models.Model):
     switch_rev_send_sell = models.BooleanField(default=False)
     switch_rev_send_buy = models.BooleanField(default=False)
     switch_profit_fixator = models.BooleanField(default=True)
+    all_wallets_blocked = models.BooleanField(default=False)
     is_ad_visible = models.BooleanField(default=False)
     qiwi_limit = models.IntegerField(default=50000)
     greetings_text = models.TextField(blank=True, null=True)

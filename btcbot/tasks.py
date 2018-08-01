@@ -65,11 +65,14 @@ def seller_bot_handler():
     if bot.switch_bot_sell:
         seller.check_new_trades()
     trades = OpenTrades.objects.all()
+    if bot.all_wallets_blocked:
+        return 0
 
     if trades:
         for trade in trades:
             if not trade.api_key_qiwi:
-               continue
+                trade.api_key_qiwi = seller.set_unused_qiwi(trade)
+                trade.save()
             if trade.disputed or trade.api_key_qiwi.is_blocked or trade.need_help:
                 if trade.need_help and trade.paid and trade.sent_second_message:
                     seller.make_new_deal(trade)

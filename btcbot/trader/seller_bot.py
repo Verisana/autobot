@@ -56,6 +56,7 @@ class LocalSellerBot():
             message = 'Все киви кошельки заблокированы. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
+            self.bot.all_wallets_blocked = True
             self.bot.save()
 
     def _check_visibility(self):
@@ -176,6 +177,7 @@ class LocalSellerBot():
                 message = 'Все киви кошельки заблокированы. Продажа остановлена.'
                 self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
                 self.bot.switch_bot_sell = False
+                self.bot.all_wallets_blocked = True
                 self.bot.save()
                 return None
 
