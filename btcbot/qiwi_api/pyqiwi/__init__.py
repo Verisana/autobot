@@ -95,7 +95,7 @@ class Wallet:
              либо довольно старым Qiwi-кошельком, которому необходимо изменение пароля.
         """
         for account in self.accounts:
-            if account.currency == currency and account.balance and account.balance.get('amount'):
+            if account.currency == currency and account.balance and isinstance(account.balance.get('amount'), float):
                 return account.balance.get('amount')
         raise ValueError("There is no Payment Account that has balance and amount on it."
                          " Maybe this is temporary Qiwi API error, you should try again later."
