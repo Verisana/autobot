@@ -6,7 +6,7 @@ class ReleasedTradesInfo(models.Model):
     trade_type = models.CharField(max_length=32)
     payment_method = models.CharField(max_length=32)
     created_at = models.DateTimeField(auto_now=True)
-    released_at = models.DateTimeField()
+    released_at = models.DateTimeField(null=True, blank=True)
     reference_code = models.CharField(max_length=20)
     contact_id = models.IntegerField()
     amount_rub = models.DecimalField(max_digits=9, decimal_places=2)
