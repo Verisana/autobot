@@ -13,7 +13,8 @@ bot_set = BotSetting.objects.get(name='Bot_QIWI')
 seller = LocalSellerBot(bot_set.id)
 pp = telegram.utils.request.Request(proxy_url='https://10.0.2.2:1080')
 telegram = telegram.Bot(token=bot_set.telegram_bot_settings.token, request=pp)
-qiwi = APIKeyQiwi.objects.get(id=4)
+qiwi = APIKeyQiwi.objects.get(id=13)
 wallet = pyqiwi.Wallet(token=qiwi.api_key,
                        proxy=qiwi.proxy,
                        number=qiwi.phone_number)
+payments = wallet.history(operation='IN')

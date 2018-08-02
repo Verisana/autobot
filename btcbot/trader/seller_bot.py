@@ -152,7 +152,7 @@ class LocalSellerBot():
         if response.status_code == 200:
             trade_obj.paid = True
             trade_obj.save()
-            UsedTransactions.objects.create(transaction_id=transaction_id)
+            UsedTransactions.objects.create(transaction_id=str(transaction_id))
             return True
         else:
             return False
@@ -185,7 +185,7 @@ class LocalSellerBot():
     def _is_used_transactions(self, payment):
         transactions = UsedTransactions.objects.all()
         for transaction in transactions:
-            if transaction.transaction_id == payment.txn_id:
+            if str(payment.txn_id) in transaction.transaction_id:
                 return True
         return False
 

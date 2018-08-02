@@ -25,7 +25,7 @@ class ReleasedTradesInfo(models.Model):
         return '%d' % self.ad_id
 
 class UsedTransactions(models.Model):
-    transaction_id = models.IntegerField()
+    transaction_id = models.CharField(max_length=32)
     created_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return '%d' % self.transaction_id
