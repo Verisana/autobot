@@ -256,8 +256,15 @@ class LocalSellerBot():
         rate_rub = Decimal(local_trade['data']['amount']) / (
                     Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         buy_rate = self.ad_upd._find_mean_buy_price()
-        profit_rub_trade = (1 - (buy_rate / rate_rub)) * Decimal(local_trade['data']['amount'])
-        profit_rub_trade -= profit_rub_trade * (self.bot.qiwi_profit_fee / 100)
+        if buy_rate <= rate_rub:
+            profit_rub_trade = (1 - (buy_rate / rate_rub)) * Decimal(local_trade['data']['amount'])
+            profit_rub_trade -= profit_rub_trade * (self.bot.qiwi_profit_fee / 100)
+            profit_rub_full = rate_rub - buy_rate
+        else:
+            profit_rub_trade = (1 - (rate_rub / buy_rate)) * Decimal(local_trade['data']['amount'])
+            profit_rub_trade *= -1
+            profit_rub_full = buy_rate - rate_rub
+
         ReleasedTradesInfo.objects.create(ad_id=local_trade['data']['contact_id'],
                                           trade_type=local_trade['data']['advertisement']['trade_type'],
                                           payment_method=local_trade['data']['advertisement']['payment_method'],
@@ -272,7 +279,7 @@ class LocalSellerBot():
                                           seller=local_trade['data']['seller']['username'],
                                           buyer=local_trade['data']['buyer']['username'],
                                           profit_rub_trade=profit_rub_trade,
-                                          profit_rub_full=rate_rub - buy_rate,
+                                          profit_rub_full=profit_rub_full,
                                           api_key_qiwi=my_trade.api_key_qiwi,
                                           disputed=disputed)
         if local_trade['data']['released_at']:
