@@ -196,7 +196,7 @@ class LocalSellerBot():
             qiwi = self._get_appropriate_qiwi(deal_price)
             self._check_qiwi_status(qiwi)
             if not qiwi.is_blocked:
-                qiwi.used_at = timezone.now()
+                qiwi.used_at = timezone.now().astimezone()
                 qiwi.save()
                 return qiwi
             n += 1
@@ -268,7 +268,7 @@ class LocalSellerBot():
         ReleasedTradesInfo.objects.create(ad_id=local_trade['data']['contact_id'],
                                           trade_type=local_trade['data']['advertisement']['trade_type'],
                                           payment_method=local_trade['data']['advertisement']['payment_method'],
-                                          created_at=timezone.now(),
+                                          created_at=timezone.now().astimezone(),
                                           released_at=local_trade['data']['released_at'],
                                           reference_code=local_trade['data']['reference_code'],
                                           contact_id=local_trade['data']['contact_id'],
@@ -308,7 +308,7 @@ class LocalSellerBot():
                                               contragent=i['data']['buyer']['username'],
                                               amount_rub=i['data']['amount'],
                                               amount_btc=i['data']['amount_btc'],
-                                              created_at=timezone.now(),
+                                              created_at=timezone.now().astimezone(),
                                               reference_text=reference_text,
                                               disputed=True)
                     continue
@@ -320,7 +320,7 @@ class LocalSellerBot():
                                                           contragent=i['data']['buyer']['username'],
                                                           amount_rub=i['data']['amount'],
                                                           amount_btc=i['data']['amount_btc'],
-                                                          created_at=timezone.now(),
+                                                          created_at=timezone.now().astimezone(),
                                                           reference_text=reference_text,
                                                           api_key_qiwi=qiwi)
                     if not new_trade.sent_first_message:
