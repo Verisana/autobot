@@ -157,9 +157,17 @@ class LocalSellerBot():
         wallet = pyqiwi.Wallet(token=qiwi.api_key,
                                proxy=qiwi.proxy,
                                number=qiwi.phone_number)
-        qiwi.balance = wallet.balance()
-        qiwi.is_blocked = wallet.profile.contract_info.blocked
-        qiwi.save()
+        try:
+            qiwi.balance = wallet.balance()
+            qiwi.is_blocked = wallet.profile.contract_info.blocked
+            qiwi.save()
+        except APIError:
+            qiwi.is_blocked = True
+            qiwi.save()
+            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+            return None
+
         if qiwi.is_blocked:
             message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
