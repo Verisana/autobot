@@ -75,7 +75,7 @@ def seller_bot_handler():
                 trade.api_key_qiwi.save()
             if trade.disputed or trade.api_key_qiwi.is_blocked or trade.need_help:
                 if trade.need_help and trade.paid and trade.sent_second_message:
-                    seller.make_new_deal(trade)
+                    seller.make_new_deal(trade, disputed=trade.disputed)
                     if bot.switch_rev_send_sell:
                         seller.leave_review(trade)
                         continue
