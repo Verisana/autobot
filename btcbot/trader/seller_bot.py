@@ -265,7 +265,8 @@ class LocalSellerBot():
                                           profit_rub_full=rate_rub - buy_rate,
                                           api_key_qiwi=my_trade.api_key_qiwi,
                                           disputed=disputed)
-        self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
+        if local_trade['data']['released_at']:
+            self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
         my_trade.api_key_qiwi.save()
 
