@@ -291,7 +291,8 @@ class LocalSellerBot():
                                               amount_rub=i['data']['amount'],
                                               amount_btc=i['data']['amount_btc'],
                                               created_at=timezone.now(),
-                                              reference_text=reference_text)
+                                              reference_text=reference_text,
+                                              disputed=True)
                     continue
 
                 if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.bot.sell_ad_settings.ad_id:
