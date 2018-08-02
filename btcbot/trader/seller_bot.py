@@ -3,6 +3,7 @@ from django.utils import timezone
 from btcbot.trader.local_api import LocalBitcoin
 from btcbot.trader.ad_bot import AdUpdateBot
 from btcbot.qiwi_api import pyqiwi
+from btcbot.qiwi_api.pyqiwi.exceptions import APIError
 from btcbot.models import BotSetting, OpenTrades, MeanBuyTrades
 from info_data.models import ReleasedTradesInfo, UsedTransactions
 import telegram
@@ -305,9 +306,14 @@ class LocalSellerBot():
         wallet = pyqiwi.Wallet(token=my_trade.api_key_qiwi.api_key,
                                proxy=my_trade.api_key_qiwi.proxy,
                                number=my_trade.api_key_qiwi.phone_number)
-        my_trade.api_key_qiwi.balance = wallet.balance()
-        my_trade.api_key_qiwi.is_blocked = wallet.profile.contract_info.blocked
-        my_trade.api_key_qiwi.save()
+        try:
+            my_trade.api_key_qiwi.balance = wallet.balance()
+            my_trade.api_key_qiwi.is_blocked = wallet.profile.contract_info.blocked
+            my_trade.api_key_qiwi.save()
+        except APIError:
+            my_trade.need_help = True
+            my_trade.save()
+            return None
         if my_trade.api_key_qiwi.is_blocked:
             message = 'Киви кошелек +{0} блокнут. Баланс: {1}. Нужна помощь по открытой сделке {2}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance, my_trade.trade_id)
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
