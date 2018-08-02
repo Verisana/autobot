@@ -164,7 +164,7 @@ class LocalSellerBot():
         except APIError:
             qiwi.is_blocked = True
             qiwi.save()
-            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
+            message = 'Киви кошелек +{0}, скорее всего, блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             return None
 
@@ -335,6 +335,11 @@ class LocalSellerBot():
         except APIError:
             my_trade.need_help = True
             my_trade.save()
+            my_trade.api_key_qiwi.is_blocked = True
+            my_trade.api_key_qiwi.save()
+            message = 'Киви кошелек +{0}, скорее всего, блокнут. Баланс: {1}. Нужна помощь по открытой сделке {2}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance, my_trade.trade_id)
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+
             return None
         if my_trade.api_key_qiwi.is_blocked:
             message = 'Киви кошелек +{0} блокнут. Баланс: {1}. Нужна помощь по открытой сделке {2}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance, my_trade.trade_id)
