@@ -10,10 +10,10 @@ import telegram
 
 @shared_task
 def daily_routine_starter():
-    qiwi_limit_resetter.delay()
-    qiwi_status_updater.delay()
-    daily_report_handler.delay()
-    qiwi_profit_fixator.delay()
+    qiwi_limit_resetter()
+    qiwi_status_updater()
+    daily_report_handler()
+    qiwi_profit_fixator()
 
 @shared_task
 def daily_report_handler(full=True):
