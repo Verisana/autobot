@@ -64,6 +64,7 @@ class MeanBuyTrades(models.Model):
     created_at = models.DateTimeField(auto_now=True)
     btc_amount = models.DecimalField(max_digits=10, decimal_places=8, null=True)
     price_rub = models.DecimalField(max_digits=9, decimal_places=2)
+    is_fee_accounted = models.BooleanField(default=False)
     def __str__(self):
         return 'Buy_active: %s' % str(self.created_at)
 

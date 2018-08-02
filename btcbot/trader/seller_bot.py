@@ -30,6 +30,7 @@ class LocalSellerBot():
         self.all_notifications = None
         if self.bot.is_ad_visible != self.bot.switch_bot_sell:
             self._check_visibility()
+        self._check_if_fee_accounted()
 
     def _get_my_ad_info(self):
         self.my_ad_info = self.lbtc.get_ad_info(self.bot.sell_ad_settings.ad_id).json()
@@ -74,6 +75,15 @@ class LocalSellerBot():
             self.bot.save()
         else:
             self._ad_visible_edit(self.bot.switch_bot_sell)
+
+    def _check_if_fee_accounted(self):
+        mean_buys = MeanBuyTrades.objects.filter(is_fee_accounted=False)
+        if mean_buys:
+            for mean_buy in mean_buys:
+                mean_buy.btc_amount += mean_buy.btc_amount * Decimal('0.01')
+                mean_buy.price_rub += mean_buy.price_rub * Decimal('0.01')
+                mean_buy.is_fee_accounted = True
+                mean_buy.save()
 
     def _ad_visible_edit(self, visible):
         if not self.my_ad_info:
