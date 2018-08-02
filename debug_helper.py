@@ -8,6 +8,7 @@ from profiles.tasks import qiwi_status_updater, qiwi_limit_resetter, qiwi_profit
 import telegram
 from btcbot.qiwi_api import pyqiwi
 
+
 bot_set = BotSetting.objects.get(name='Bot_QIWI')
 seller = LocalSellerBot(bot_set.id)
 pp = telegram.utils.request.Request(proxy_url='https://10.0.2.2:1080')

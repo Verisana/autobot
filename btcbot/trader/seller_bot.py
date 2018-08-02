@@ -171,11 +171,11 @@ class LocalSellerBot():
                 return True
         return False
 
-    def set_unused_qiwi(self, trade_obj):
+    def set_unused_qiwi(self, deal_price):
         available_qiwi = len(self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at'))
         n = 0
         while n < available_qiwi:
-            qiwi = self._get_appropriate_qiwi(trade_obj.amount_rub)
+            qiwi = self._get_appropriate_qiwi(deal_price)
             self._check_qiwi_status(qiwi)
             if not qiwi.is_blocked:
                 qiwi.used_at = timezone.now()
@@ -275,16 +275,27 @@ class LocalSellerBot():
             for i in self.opened_trades['data']['contact_list']:
                 contact_id = i['data']['contact_id']
                 ad_id = i['data']['advertisement']['id']
+
+                if i['data']['disputed_at'] and not self._is_trade_processed(contact_id):
+                    reference_text = self.reference_text.format(i['data']['reference_code'])
+                    OpenTrades.objects.create(trade_id=contact_id,
+                                              contragent=i['data']['buyer']['username'],
+                                              amount_rub=i['data']['amount'],
+                                              amount_btc=i['data']['amount_btc'],
+                                              created_at=timezone.now(),
+                                              reference_text=reference_text)
+                    continue
+
                 if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.bot.sell_ad_settings.ad_id:
                     reference_text = self.reference_text.format(i['data']['reference_code'])
+                    qiwi = self.set_unused_qiwi(i['data']['amount'])
                     new_trade = OpenTrades.objects.create(trade_id=contact_id,
                                                           contragent=i['data']['buyer']['username'],
                                                           amount_rub=i['data']['amount'],
                                                           amount_btc=i['data']['amount_btc'],
                                                           created_at=timezone.now(),
-                                                          reference_text=reference_text)
-                    new_trade.api_key_qiwi = self.set_unused_qiwi(new_trade)
-                    new_trade.save()
+                                                          reference_text=reference_text,
+                                                          api_key_qiwi=qiwi)
                     if not new_trade.sent_first_message:
                         self.send_first_message(new_trade)
 
@@ -295,6 +306,7 @@ class LocalSellerBot():
 
                 if not i['data']['disputed_at']:
                     btc_opened_deals += (Decimal(i['data']['amount_btc']) + Decimal(i['data']['fee_btc']))
+
         if btc_opened_deals > btc_left_to_sell:
             message = 'Открытые сделки превышают оставшийся лимит по биткам. Продажа остановлена. По открытым сделкам битки будут отпущены автоматически, как только поступит оплата.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)

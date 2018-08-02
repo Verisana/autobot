@@ -39,7 +39,7 @@ def qiwi_limit_resetter():
 
     if len(transactions) > 100:
         for transaction in transactions[100:]:
-            transactions.delete()
+            transaction.delete()
 
 
 @shared_task
