@@ -255,7 +255,7 @@ class LocalSellerBot():
         elif local_trade['data']['closed_at']:
             my_trade.delete()
 
-    def make_new_deal(self, my_trade, disputed=False):
+    def make_new_deal(self, my_trade, message=None, disputed=False):
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
             return False
@@ -277,7 +277,7 @@ class LocalSellerBot():
                                           payment_method=local_trade['data']['advertisement']['payment_method'],
                                           created_at=timezone.now().astimezone(),
                                           released_at=local_trade['data']['released_at'],
-                                          reference_code=local_trade['data']['reference_code'],
+                                          text_to_release_btc=message,
                                           contact_id=local_trade['data']['contact_id'],
                                           amount_rub=local_trade['data']['amount'],
                                           amount_btc=local_trade['data']['amount_btc'],
@@ -395,7 +395,7 @@ class LocalSellerBot():
                     for message in messages['data']['message_list'][::-1]:
                         if payment.account[1:] in message['msg']:
                             self._release_btc(my_trade, payment.txn_id)
-                            self.make_new_deal(my_trade)
+                            self.make_new_deal(my_trade, message=message['msg'])
                             if not my_trade.sent_second_message:
                                 self.send_second_message(my_trade)
                                 if self.bot.switch_rev_send_sell:
