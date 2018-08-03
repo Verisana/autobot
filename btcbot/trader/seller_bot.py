@@ -48,6 +48,13 @@ class LocalSellerBot():
     def _get_all_notifications(self):
         self.all_notifications = self.lbtc.get_all_notifications().json()
 
+    def _get_messages_of_trade(self, trade_id):
+        response = self.lbtc.get_contact_messages(str(trade_id))
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return response
+
     def _get_appropriate_qiwi(self, deal_price):
         qiwi_list = self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at')
         if qiwi_list:
@@ -366,6 +373,7 @@ class LocalSellerBot():
             return None
         payments = wallet.history(operation='IN', start_date=my_trade.created_at, end_date=timezone.now().astimezone())
         local_trade = self._get_specific_trade(my_trade.trade_id)
+        messages = self._get_messages_of_trade(my_trade.trade_id)
         if local_trade == None:
             return None
         if local_trade['data']['canceled_at'] or (local_trade['data']['closed_at'] and not local_trade['data']['released_at']):
@@ -382,23 +390,15 @@ class LocalSellerBot():
             for payment in payments['transactions']:
                 if self._is_used_transactions(payment):
                     continue
-                if payment.comment:
-                    if my_trade.reference_text in payment.comment and payment.sum.currency == 643 \
-                            and payment.sum.amount == my_trade.amount_rub:
-                        self._release_btc(my_trade, payment.txn_id)
-                        self.make_new_deal(my_trade)
-                        if not my_trade.sent_second_message:
-                            self.send_second_message(my_trade)
-                            if self.bot.switch_rev_send_sell:
-                                if self.leave_review(my_trade):
-                                    return True
-                        break
-                else:
-                    if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub:
-                        message = 'Поступил платеж от {0}, похожий на оплату, в размере {1} руб. с номера {2} по сделке {3} на наш кошелек +{4}. \
-                        Если платеж верный, отпустите битки. Я этим заниматься не буду. После чего поставьте галочку \
-                        paid и sent_second_message'.format(payment.date.astimezone().strftime('%Y-%m-%d %H:%M:%S'), payment.sum.amount,
-                                                         payment.account, my_trade.trade_id, my_trade.api_key_qiwi.phone_number)
-                        self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-                        my_trade.need_help = True
-                        my_trade.save()
+
+                if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub:
+                    for message in messages['data']['message_list'][::-1]:
+                        if payment.account[1:] in message['msg']:
+                            self._release_btc(my_trade, payment.txn_id)
+                            self.make_new_deal(my_trade)
+                            if not my_trade.sent_second_message:
+                                self.send_second_message(my_trade)
+                                if self.bot.switch_rev_send_sell:
+                                    if self.leave_review(my_trade):
+                                        return True
+                            return None

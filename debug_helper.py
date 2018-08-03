@@ -11,6 +11,7 @@ from btcbot.qiwi_api import pyqiwi
 
 bot_set = BotSetting.objects.get(name='Bot_QIWI')
 seller = LocalSellerBot(bot_set.id)
+lbtc = LocalBitcoin(bot_set.sell_ad_settings.api_key.api_key, bot_set.sell_ad_settings.api_key.api_secret)
 pp = telegram.utils.request.Request(proxy_url='https://10.0.2.2:1080')
 telegram = telegram.Bot(token=bot_set.telegram_bot_settings.token, request=pp)
 qiwi = APIKeyQiwi.objects.get(id=13)
