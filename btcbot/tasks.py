@@ -48,6 +48,8 @@ def ad_bot_runner():
     bot_settings = BotSetting.objects.get(name='Bot_QIWI')
     insp = inspect()
     active = insp.active()
+    scheduled = insp.scheduled()
+    reserved = insp.reserved()
 
     if bot_settings.switch_sell_ad_upd:
         if 'sell_ad_bot_execution@ubuntu' in active.keys():
@@ -57,6 +59,13 @@ def ad_bot_runner():
         if 'buy_ad_bot_execution@ubuntu' in active.keys():
             if not active['buy_ad_bot_execution@ubuntu']:
                 buy_ad_bot_execution.delay(random.sample([1, 2], 1))
+
+    if bot_settings.switch_bot_sell:
+        if 'seller_bot_handler@ubuntu' in active.keys() and 'seller_bot_handler@ubuntu' in scheduled.keys() \
+                and 'seller_bot_handler@ubuntu' in reserved.keys():
+            if not active['seller_bot_handler@ubuntu'] and not scheduled['seller_bot_handler@ubuntu'] \
+                    and not reserved['seller_bot_handler@ubuntu']:
+                seller_bot_handler.delay()
 
 @shared_task
 def seller_bot_handler():
@@ -77,6 +86,7 @@ def seller_bot_handler():
                 if trade.need_help and trade.paid and trade.sent_second_message:
                     seller.make_new_deal(trade, disputed=trade.disputed)
                     trade.delete()
+                    continue
                 else:
                     continue
             if not trade.sent_first_message:
@@ -92,6 +102,9 @@ def seller_bot_handler():
                 seller.leave_review(trade)
             elif trade.sent_first_message and trade.paid and trade.sent_second_message and not bot.switch_rev_send_sell:
                 trade.delete()
+
+    if bot.switch_bot_sell:
+        seller_bot_handler.apply_async(countdown=15)
 
 @shared_task
 def open_trades_cleaner():

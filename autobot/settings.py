@@ -121,7 +121,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 5.0},
     'seller_bot_handler': {
         'task': 'btcbot.tasks.seller_bot_handler',
-        'schedule': 15.0},
+        'schedule': 60.0},
     'daily_routines': {
         'task': 'info_data.tasks.daily_routine_starter',
         'schedule': crontab(minute=0, hour=0)},
