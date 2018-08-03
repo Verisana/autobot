@@ -70,18 +70,13 @@ def seller_bot_handler():
 
     if trades:
         for trade in trades:
-            while not trade.api_key_qiwi:
+            if not trade.api_key_qiwi:
                 trade.api_key_qiwi = seller.set_unused_qiwi(trade.amount_rub)
                 trade.api_key_qiwi.save()
             if trade.disputed or trade.api_key_qiwi.is_blocked or trade.need_help:
                 if trade.need_help and trade.paid and trade.sent_second_message:
                     seller.make_new_deal(trade, disputed=trade.disputed)
-                    if bot.switch_rev_send_sell:
-                        seller.leave_review(trade)
-                        continue
-                    else:
-                        trade.delete()
-                        continue
+                    trade.delete()
                 else:
                     continue
             if not trade.sent_first_message:
