@@ -216,7 +216,7 @@ class LocalSellerBot():
                 return None
 
     def send_first_message(self, trade_obj):
-        message = self.bot.greetings_text.format(trade_obj.api_key_qiwi.phone_number, trade_obj.reference_text)
+        message = self.bot.greetings_text.format(trade_obj.api_key_qiwi.phone_number)
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), message)
         if response.status_code == 200:
             trade_obj.sent_first_message = True
