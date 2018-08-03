@@ -119,9 +119,6 @@ CELERY_BEAT_SCHEDULE = {
     'ad_bot_runner': {
         'task': 'btcbot.tasks.ad_bot_runner',
         'schedule': 5.0},
-    'seller_bot_handler': {
-        'task': 'btcbot.tasks.seller_bot_handler',
-        'schedule': 60.0},
     'daily_routines': {
         'task': 'info_data.tasks.daily_routine_starter',
         'schedule': crontab(minute=0, hour=0)},
