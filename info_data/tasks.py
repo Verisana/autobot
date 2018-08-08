@@ -4,16 +4,14 @@ import pytz
 from django.utils import timezone
 from info_data.models import ReleasedTradesInfo
 from btcbot.models import BotSetting
-from profiles.tasks import qiwi_limit_resetter, qiwi_profit_fixator, qiwi_status_updater
+from profiles.tasks import qiwi_limit_resetter
 import telegram
 
 
 @shared_task
 def daily_routine_starter():
     qiwi_limit_resetter()
-    qiwi_status_updater()
     daily_report_handler()
-    qiwi_profit_fixator()
 
 @shared_task
 def daily_report_handler(full=True):

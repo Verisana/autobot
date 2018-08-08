@@ -7,7 +7,6 @@ class ReleasedTradesInfo(models.Model):
     payment_method = models.CharField(max_length=32)
     created_at = models.DateTimeField(auto_now=True)
     released_at = models.DateTimeField(null=True, blank=True)
-    text_to_release_btc = models.TextField(null=True, blank=True)
     contact_id = models.IntegerField()
     amount_rub = models.DecimalField(max_digits=9, decimal_places=2)
     amount_btc = models.DecimalField(max_digits=10, decimal_places=8)
@@ -18,14 +17,7 @@ class ReleasedTradesInfo(models.Model):
     profit_rub_trade = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     profit_rub_full = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
     api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE)
-    is_profit_fixated = models.BooleanField(default=False)
     is_qiwi_blocked = models.BooleanField(default=False)
     disputed=models.BooleanField(default=False)
     def __str__(self):
         return '%d' % self.ad_id
-
-class UsedTransactions(models.Model):
-    transaction_id = models.CharField(max_length=32)
-    created_at = models.DateTimeField(auto_now=True)
-    def __str__(self):
-        return '%d' % self.transaction_id

@@ -2,10 +2,8 @@ from decimal import *
 from django.utils import timezone
 from btcbot.trader.local_api import LocalBitcoin
 from btcbot.trader.ad_bot import AdUpdateBot
-from btcbot.qiwi_api import pyqiwi
-from btcbot.qiwi_api.pyqiwi.exceptions import APIError
 from btcbot.models import BotSetting, OpenTrades, MeanBuyTrades
-from info_data.models import ReleasedTradesInfo, UsedTransactions
+from info_data.models import ReleasedTradesInfo
 import telegram
 
 
@@ -61,6 +59,8 @@ class LocalSellerBot():
             for qiwi in qiwi_list:
                 balance = qiwi.limit_left - Decimal(deal_price)
                 if balance > 0:
+                    qiwi.used_at = timezone.now().astimezone()
+                    qiwi.save()
                     return qiwi
             message = 'Дневные лимиты по киви кошелькам сожжены. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
@@ -154,12 +154,9 @@ class LocalSellerBot():
             self.bot.switch_bot_sell = False
             self.bot.save()
 
-    def _release_btc(self, trade_obj, transaction_id):
+    def _release_btc(self, trade_obj):
         response = self.lbtc.contact_release(str(trade_obj.trade_id))
         if response.status_code == 200:
-            trade_obj.paid = True
-            trade_obj.save()
-            UsedTransactions.objects.create(transaction_id=str(transaction_id))
             return True
         else:
             return False
@@ -169,51 +166,6 @@ class LocalSellerBot():
             if con_id == i.trade_id:
                 return True
         return False
-
-    def _check_qiwi_status(self, qiwi):
-        wallet = pyqiwi.Wallet(token=qiwi.api_key,
-                               proxy=qiwi.proxy,
-                               number=qiwi.phone_number)
-        try:
-            qiwi.balance = wallet.balance()
-            qiwi.is_blocked = wallet.profile.contract_info.blocked
-            qiwi.save()
-        except APIError:
-            qiwi.is_blocked = True
-            qiwi.save()
-            message = 'Киви кошелек +{0}, скорее всего, блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
-            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-            return None
-
-        if qiwi.is_blocked:
-            message = 'Киви кошелек +{0} блокнут. Баланс: {1}'.format(qiwi.phone_number, qiwi.balance)
-            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-
-    def _is_used_transactions(self, payment):
-        transactions = UsedTransactions.objects.all()
-        for transaction in transactions:
-            if str(payment.txn_id) in transaction.transaction_id:
-                return True
-        return False
-
-    def set_unused_qiwi(self, deal_price):
-        available_qiwi = len(self.bot.api_key_qiwi.filter(is_blocked=False).order_by('used_at'))
-        n = 0
-        while n < available_qiwi:
-            qiwi = self._get_appropriate_qiwi(deal_price)
-            self._check_qiwi_status(qiwi)
-            if not qiwi.is_blocked:
-                qiwi.used_at = timezone.now().astimezone()
-                qiwi.save()
-                return qiwi
-            n += 1
-            if n == available_qiwi:
-                message = 'Все киви кошельки заблокированы. Продажа остановлена.'
-                self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-                self.bot.switch_bot_sell = False
-                self.bot.all_wallets_blocked = True
-                self.bot.save()
-                return None
 
     def send_first_message(self, trade_obj):
         message = self.bot.greetings_text.format(trade_obj.api_key_qiwi.phone_number)
@@ -237,25 +189,11 @@ class LocalSellerBot():
     def leave_review(self, trade_obj):
         response = self.lbtc.post_feedback_to_user(trade_obj.contragent, feedback='trust', message=self.bot.review_text)
         if response.status_code == 200:
-            trade_obj.delete()
             return True
         else:
             return False
 
-    def check_dispute_result(self, my_trade):
-        local_trade = self._get_specific_trade(my_trade.trade_id)
-        if local_trade == None:
-            return False
-
-        if local_trade['data']['released_at']:
-            message = 'Спор по сделке №{0} завершился отпуском битков. Проверьте, поступила ли оплата. Если нет, то сделку надо удалить из системы'.format(my_trade.trade_id)
-            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-            self.make_new_deal(my_trade, disputed=True)
-            my_trade.delete()
-        elif local_trade['data']['closed_at']:
-            my_trade.delete()
-
-    def make_new_deal(self, my_trade, message=None, disputed=False):
+    def make_new_deal(self, my_trade, disputed=False, qiwi_blocked=False):
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
             return False
@@ -277,7 +215,6 @@ class LocalSellerBot():
                                           payment_method=local_trade['data']['advertisement']['payment_method'],
                                           created_at=timezone.now().astimezone(),
                                           released_at=local_trade['data']['released_at'],
-                                          text_to_release_btc=message,
                                           contact_id=local_trade['data']['contact_id'],
                                           amount_rub=local_trade['data']['amount'],
                                           amount_btc=local_trade['data']['amount_btc'],
@@ -288,6 +225,7 @@ class LocalSellerBot():
                                           profit_rub_trade=profit_rub_trade,
                                           profit_rub_full=profit_rub_full,
                                           api_key_qiwi=my_trade.api_key_qiwi,
+                                          is_qiwi_blocked=qiwi_blocked,
                                           disputed=disputed)
         if local_trade['data']['released_at']:
             self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
@@ -322,7 +260,7 @@ class LocalSellerBot():
 
                 if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.bot.sell_ad_settings.ad_id:
                     reference_text = self.reference_text.format(i['data']['reference_code'])
-                    qiwi = self.set_unused_qiwi(i['data']['amount'])
+                    qiwi = self._get_appropriate_qiwi(i['data']['amount'])
                     new_trade = OpenTrades.objects.create(trade_id=contact_id,
                                                           contragent=i['data']['buyer']['username'],
                                                           amount_rub=i['data']['amount'],
@@ -330,9 +268,7 @@ class LocalSellerBot():
                                                           created_at=timezone.now().astimezone(),
                                                           reference_text=reference_text,
                                                           api_key_qiwi=qiwi)
-                    if not new_trade.sent_first_message:
-                        self.send_first_message(new_trade)
-
+                    self.send_first_message(new_trade)
                     for notification in self.all_notifications['data']:
                         if notification['contact_id'] == contact_id:
                             self.lbtc.mark_notification_as_read(str(notification['id']))
@@ -342,42 +278,16 @@ class LocalSellerBot():
                     btc_opened_deals += (Decimal(i['data']['amount_btc']) + Decimal(i['data']['fee_btc']))
 
         if btc_opened_deals > btc_left_to_sell:
-            message = 'Открытые сделки превышают оставшийся лимит по биткам. Продажа остановлена. По открытым сделкам битки будут отпущены автоматически, как только поступит оплата.'
+            message = 'Открытые сделки превышают оставшийся лимит по биткам. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
             self.bot.save()
 
-
-    def check_payment(self, my_trade):
-        wallet = pyqiwi.Wallet(token=my_trade.api_key_qiwi.api_key,
-                               proxy=my_trade.api_key_qiwi.proxy,
-                               number=my_trade.api_key_qiwi.phone_number)
-        try:
-            my_trade.api_key_qiwi.balance = wallet.balance()
-            my_trade.api_key_qiwi.is_blocked = wallet.profile.contract_info.blocked
-            my_trade.api_key_qiwi.save()
-        except APIError:
-            my_trade.need_help = True
-            my_trade.save()
-            my_trade.api_key_qiwi.is_blocked = True
-            my_trade.api_key_qiwi.save()
-            message = 'Киви кошелек +{0}, скорее всего, блокнут. Баланс: {1}. Нужна помощь по открытой сделке {2}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance, my_trade.trade_id)
-            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-
-            return None
-        if my_trade.api_key_qiwi.is_blocked:
-            message = 'Киви кошелек +{0} блокнут. Баланс: {1}. Нужна помощь по открытой сделке {2}'.format(my_trade.api_key_qiwi.phone_number, my_trade.api_key_qiwi.balance, my_trade.trade_id)
-            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-            my_trade.need_help = True
-            my_trade.save()
-            return None
-        payments = wallet.history(operation='IN', start_date=my_trade.created_at, end_date=timezone.now().astimezone())
+    def manual_check_payment(self, my_trade):
         local_trade = self._get_specific_trade(my_trade.trade_id)
-        messages = self._get_messages_of_trade(my_trade.trade_id)
         if local_trade == None:
             return None
         if local_trade['data']['canceled_at'] or (local_trade['data']['closed_at'] and not local_trade['data']['released_at']):
-            my_trade.delete()
             return True
         if local_trade['data']['disputed_at']:
             message = 'По сделке №{0} открыт диспут {1}'.format(my_trade.trade_id, local_trade['data']['disputed_at'])
@@ -386,19 +296,14 @@ class LocalSellerBot():
             my_trade.save()
             return None
 
-        if local_trade['data']['payment_completed_at'] and payments['transactions']:
-            for payment in payments['transactions']:
-                if self._is_used_transactions(payment):
-                    continue
-
-                if payment.sum.currency == 643 and payment.sum.amount == my_trade.amount_rub:
-                    for message in messages['data']['message_list'][::-1]:
-                        if payment.account[1:] in message['msg']:
-                            self._release_btc(my_trade, payment.txn_id)
-                            self.make_new_deal(my_trade, message=message['msg'])
-                            if not my_trade.sent_second_message:
-                                self.send_second_message(my_trade)
-                                if self.bot.switch_rev_send_sell:
-                                    if self.leave_review(my_trade):
-                                        return True
-                            return None
+        if my_trade.paid:
+            self._release_btc(my_trade)
+            self.make_new_deal(my_trade)
+            if not my_trade.sent_second_message:
+                self.send_second_message(my_trade)
+                if self.bot.switch_rev_send_sell:
+                    if self.leave_review(my_trade):
+                        return True
+                else:
+                    return True
+            return None

@@ -128,11 +128,8 @@ CELERY_TASK_ROUTES = {'btcbot.tasks.ad_bot_runner': {'queue': 'ad_bot_runner'},
                       'btcbot.tasks.sell_ad_bot_execution': {'queue': 'sell_ad_bot_execution'},
                       'btcbot.tasks.buy_ad_bot_execution': {'queue': 'buy_ad_bot_execution'},
                       'btcbot.tasks.seller_bot_handler': {'queue': 'seller_bot_handler'},
-                      'btcbot.tasks.open_trades_cleaner': {'queue': 'fast_rare_tasks'},
                       'info_data.tasks.daily_report_handler': {'queue': 'fast_rare_tasks'},
                       'profiles.tasks.qiwi_limit_resetter': {'queue': 'fast_rare_tasks'},
-                      'profiles.tasks.qiwi_status_updater': {'queue': 'fast_rare_tasks'},
-                      'profiles.tasks.qiwi_profit_fixator': {'queue': 'qiwi_profit_fixator'},
                     }
 
 try:
