@@ -1,3 +1,13 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+class IndexView():
+    pass
+
+
+class MessageView():
+    pass
+
+
+class SettingsView():
+    pass

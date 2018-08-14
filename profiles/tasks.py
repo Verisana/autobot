@@ -1,10 +1,8 @@
 from decimal import *
 from celery import shared_task
-from info_data.models import ReleasedTradesInfo
 from .models import APIKeyQiwi
 import telegram
-from btcbot.models import BotSetting, OpenTrades
-from btcbot.qiwi_api import pyqiwi
+from btcbot.models import BotSetting
 
 
 @shared_task

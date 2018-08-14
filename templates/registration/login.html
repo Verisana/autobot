@@ -1,0 +1,41 @@
+<!doctype html>
+{% load static %}
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="{% static 'images/favicon.png' %}">
+    <title>Вход в аккаунт</title>    
+    <link href="{% static 'css/bootstrap.css' %}" rel="stylesheet">
+    <link href="{% static 'css/signin.css' %}" rel="stylesheet">
+
+  </head>
+  <body class="text-center">  
+    <form class="form-signin" method="post" action="{% url 'profiles:login' %}">
+      {% csrf_token %}
+      <img class="mb-4" src="{% static 'images/robot.png' %}" alt="" width="72" height="72">
+      <h1 class="h3 mb-3 font-weight-normal">Залогинься, чтобы получить доступ к сайту</h1>
+      <div>
+        <td>{{ form.username.label_tag }}</td>
+        <td>{{ form.username }}</td>
+      </div>
+      <div>
+        <td>{{ form.password.label_tag }}</td>
+        <td>{{ form.password }}</td>
+      </div>
+
+      {% if form.errors %}
+        <p>Логин и/или пароль не совпадают. ПОпробуй еще раз</p>
+      {% endif %}
+
+      <br \> <button class="btn btn-lg btn-primary btn-block" type="submit">Войти</button>
+      <input type="hidden" name="next" value="{{ next }}" /><br \>
+      <p><a href="{% url 'profiles:password_reset' %}">Забыл пароль?</a><br \></p>
+      <p><a href="{% url 'profiles:signup' %}">Зарегистрироваться</a></p>
+      <p class="mt-5 mb-3 text-muted">&copy; Robin Good 2018</p>
+    </form>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/popper.js' %}"></script>
+  </body>
+</html>

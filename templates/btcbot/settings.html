@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Bot settings{% endblock %}
+
+
+{% block nav_baractive_settings %}active{% endblock %}
+
+
+{% block content %}
+    <div class="starter-template">
+        <h1 class="bold reddish"><b>Настройки бота по объявлениям</b></h1>
+
+        {% if messages %}
+        <div class="alert alert-success" role="alert">
+            <ul class="messages ">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <div class="container">
+            <br /><div class="row">
+                <div class="col border">id объявления</div>
+                <div class="col border">Имя</div>
+                <div class="col border">Работает</div>
+                <div class="col border">API ключи</div>
+                <div class="col border">Стоп цена</div>
+                <div class="col border">Шаг</div>
+                <div class="col border">Максимальный объем</div>
+                <div class="col border">Минимальный объем</div>
+                <div class="col border">Частота обновления</div>
+            </div>
+            {% for adbot in object_list %}
+            <div class="row">
+                <div class="col border">{{ adbot.ad_id }}</div>
+                <div class="col border">{{ adbot.name }}</div>
+		{% if adbot.switch %}
+                <div class="col border">Да</div>
+		{% else %}
+		<div class="col border">Нет</div>
+		{% endif %}
+                <div class="col border">{{ adbot.api_keys }}</div>
+                <div class="col border">{{ adbot.stop_price }}</div>
+                <div class="col border">{{ adbot.step }}</div>
+                <div class="col border">{{ adbot.volume_max }}</div>
+                <div class="col border">{{ adbot.volume_min }}</div>
+                <div class="col border">{{ adbot.frequency }}</div>
+            </div>
+	    {% endfor %}
+{% endblock %}

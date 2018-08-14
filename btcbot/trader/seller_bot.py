@@ -18,10 +18,20 @@ class LocalSellerBot():
                                  proxy=proxy)
         self.telegram_bot = telegram.Bot(token=self.bot.telegram_bot_settings.token)
 
-        #remove all blocked qiwi wallets
+        #remove all blocked qiwi wallets and notificate
         for qiwi_wallet in self.bot.api_key_qiwi.all():
             if qiwi_wallet.is_blocked:
+                message = 'Киви кошелек +{0} блокнут. Предположительный баланс: {1} руб.'.format(qiwi_wallet.phone_number,
+                                                                                                 qiwi_wallet.balance)
+                self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
                 self.bot.api_key_qiwi.remove(qiwi_wallet)
+
+        if not self.bot.api_key_qiwi.all():
+            message = 'Не осталось киви кошельков для работы. Продажа остановлена.'
+            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
+            self.bot.switch_bot_sell = False
+            self.bot.all_wallets_blocked = True
+            self.bot.save()
 
         self.my_ad_info = None
         self.opened_trades = None
@@ -67,12 +77,6 @@ class LocalSellerBot():
             self.bot.switch_bot_sell = False
             self.bot.save()
             return qiwi_list.order_by('-limit_left')[0]
-        else:
-            message = 'Все киви кошельки заблокированы. Продажа остановлена.'
-            self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
-            self.bot.switch_bot_sell = False
-            self.bot.all_wallets_blocked = True
-            self.bot.save()
 
     def _check_visibility(self):
         if not self.my_ad_info:

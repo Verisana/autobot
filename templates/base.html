@@ -1,0 +1,58 @@
+<!doctype html>
+{% load static %}
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="{% static 'images/favicon.png' %}">
+    <title>{% block title %}{% endblock %}</title>    
+    <!-- Bootstrap core CSS -->
+    <link href="{% static 'css/bootstrap.css' %}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    {% block custom_css %}
+    <link href="{% static 'css/starter-template.css' %}" rel="stylesheet">
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% endblock %}
+  </head>
+  <body {% block body_tag %}{% endblock %}>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item {% block nav_baractive_index %}{% endblock %}">
+            <a class="nav-link" href="{% url 'btcbot:index' %}">Открытые сделки</a>
+          </li>
+          <li class="nav-item {% block nav_baractive_wallets %}{% endblock %}">
+            <a class="nav-link" href="{% url 'profiles:wallets' %}" target="_blank">Кошельки</a>
+          </li>
+          <li class="nav-item {% block nav_baractive_settings %}{% endblock %}">
+                <a class="nav-link" href="{% url 'btcbot:settings' %}">Настройки</a>
+          </li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          {% if user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'btcbot:index' %}">Пользователь: {{ user.get_username }}</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'profiles:logout' %}">Выйти</a>
+          </li>          
+          {% else %}
+          <li class="nav-item {% block nav_baractive_login %}{% endblock %}">
+		  <a class="nav-link" href="{% url 'profiles:login'%}?next={% url 'btcbot:index' %}">Залогиниться</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </nav>
+    <main role="main" class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/popper.js' %}"></script>
+  </body>
+</html>

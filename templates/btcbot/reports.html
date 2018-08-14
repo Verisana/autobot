@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Отчеты{% endblock %}
+
+
+{% block nav_baractive_reports %}active{% endblock %}
+
+
+{% block content %}
+  <div class="starter-template">
+    
+    <h1 class="bold"><b>Параметры отчета</b></h1>
+
+    {% if messages %}
+      <div class="alert alert-success" role="alert">
+        <ul class="messages ">
+	  {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="container">
+      <form action="{% url 'ad_bot:reports' %}" method="post">
+	{% csrf_token %}
+	<select name = "adbot_chooser">
+	  {% for i in adbot %}
+	    <option value="{{i.id}}">{{ i.name }}</option>
+	  {% endfor %}
+	</select></br>
+	</br><label for="date_1">Дата начала:</label>
+	</br><p><input type="datetime-local" name="date_1"></p></br>
+	<label for="date_2">Дата окончания:</label>
+	<p><input type="datetime-local" name="date_2"></p></br>
+	<button class="btn btn-success" type="submit"><b>Сформировать отчет</b></button>
+      </form><br />
+    </div>
+  {% if method == "post" %}
+	<p><b>Много раз не нажимать!</b></p>
+	<a href={% url 'ad_bot:update' %}><button class="btn btn-danger"><b>Обновить данные вручную</b></button></a>
+  {% endif %}
+
+  {% if is_data == "2" %}
+    <div class="container">
+      <p><b>Средний курс:</b> {{ mean_price|floatformat:2 }}</p>
+      <p><b>Cумма в рублях на Qiwi:</b> {{ sum_rub|floatformat:2 }}</p>
+      <p><b>Сумма в рублях наличные (-1.8%):</b> {{ sum_rub_qiwi|floatformat:2 }}</p>
+      <p><b>Cумма в битках:</b> {{ sum_all_btc|floatformat:8 }}</p>
+      <p><b>Количество сделок:</b> {{ number_trades }}</p>
+
+      <br /><div class="row">
+        <div class="col border">Номер</div>
+        <div class="col border">Дата</div>
+        <div class="col border">ID</div>
+        <div class="col border">Контрагент</div>
+        <div class="col border">Курс</div>
+        <div class="col border">Сумма в руб.</div>
+        <div class="col border">Сумма в битках</div>
+        <div class="col border">Комиссия в битках</div>
+      </div>
+      {% for i in report_raw %}
+        <div class="row">
+	  <div class="col border">{{ forloop.counter }}</div>
+	  <div class="col border">{{ i.date }}</div>
+          <div class="col border">{{ i.contact_id }}</div>
+          <div class="col border">{{ i.agent }}</div>
+          <div class="col border">{{ i.price|floatformat:2 }}</div>
+          <div class="col border">{{ i.amount_rub|floatformat:0 }}</div>
+          <div class="col border">{{ i.amount_btc|floatformat:8 }}</div>
+          <div class="col border">{{ i.fee_btc|floatformat:8 }}</div>
+        </div>
+      {% endfor %}   
+    </div>
+  {% elif is_data == "1" %}
+    <p><b>Нет информации по указанному периоду</b></p>
+  {% endif %}
+  </div>
+
+{% endblock %}

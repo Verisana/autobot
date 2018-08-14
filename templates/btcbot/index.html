@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Состояние бота{% endblock %}
+
+
+{% block nav_baractive_index %}active{% endblock %}
+
+
+{% block content %}
+    <div class="starter-template">
+    
+        <h1 class="bold"><b>Состояние бота</b></h1>
+
+        {% if messages %}
+        <div class="alert alert-success" role="alert">
+            <ul class="messages ">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+    <div class="container">
+      <div class="row">
+        {% for adbot_qs in adbot %} 
+        <div class="col-md-4">
+          <div class="card mb-4 box-shadow">
+            <div class="card-body">		  
+	      <h3>{{ adbot_qs.name }} <br />{{ adbot_qs.ad_id }}</h3>
+	      {% if adbot_qs.switch %}
+	      <form action="{% url 'ad_bot:switch' %}" method="post">
+		{% csrf_token %}
+		<input type='hidden' name='bot_id' value='{{ adbot_qs.id }}' />
+		<button class="btn btn-success" type="submit"><b>Бот работает</b></button>
+	      </form><br />
+              {% else %}
+	      <form action="{% url 'ad_bot:switch' %}" method="post">
+		{% csrf_token %}
+		<input type='hidden' name='bot_id' value='{{ adbot_qs.id }}' />
+		<button class="btn btn-danger" type="submit"><b>Бот не работает</b></button>
+	      </form><br />
+	      {% endif %}
+	      <p><b>{{ adbot_qs.get_payment_method_display }}</b> ||| <b>{{ adbot_qs.get_trade_direction_display }}</b></p>
+	      <p><b>{{ adbot_qs.frequency }}</b> ||| <b>{{ adbot_qs.stop_price }}</b> ||| <b>{{ adbot_qs.step }}</b> <br /> <b>MAX: {{ adbot_qs.volume_max }}</b> ||| <b>MIN: {{ adbot_qs.volume_min }}</b></p>
+	      {% comment %}
+	      <p>Совершенные действия</p>
+	      <div class="my-small">
+	        {% for actionlog in actionlist %}
+	      	  {% if adbot_qs.id == actionlog.bot_model.id %}  
+		  {{ actionlog.timestamp|date:"Y-m-d, G:i:s" }} <br /> {{ actionlog.action }} <br />
+		  {% endif %}
+	        {% endfor %}
+	      </div>
+	      {% endcomment %}
+	    </div>
+	  </div>
+	</div>
+        {% endfor %}
+      </div>
+    </div>
+
+{% endblock %}

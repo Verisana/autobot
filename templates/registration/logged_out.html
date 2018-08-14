@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Logged out{% endblock %}
+
+
+{% block content %}
+    <div class="starter-template text-left">
+        <h1 class="bold reddish"><b>Logged out!</b></h1>
+        <div class="container text-left">
+            <a href="{% url 'profiles:login'%}">Click here to login again.</a>
+        </div>
+    </div>
+{% endblock %}
