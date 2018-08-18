@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ReleasedTradesInfo
+from .models import ReleasedTradesInfo, OperatorsWorkingShift
 
 
 class ReleasedTradesInfoAdmin(admin.ModelAdmin):
@@ -10,4 +10,10 @@ class ReleasedTradesInfoAdmin(admin.ModelAdmin):
     save_on_top = True
 
 
+class OperatorsWorkingShiftAdmin(admin.ModelAdmin):
+    list_display = [field.name for field in OperatorsWorkingShift._meta.fields if field.name != 'id']
+    save_on_top = True
+
+
 admin.site.register(ReleasedTradesInfo, ReleasedTradesInfoAdmin)
+admin.site.register(OperatorsWorkingShift, OperatorsWorkingShiftAdmin)

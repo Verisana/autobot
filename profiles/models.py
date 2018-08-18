@@ -22,6 +22,7 @@ class APIKeyQiwi(models.Model):
     proxy = models.CharField(max_length=25, null=True, blank=True)
     limit_left = models.DecimalField(max_digits=9, decimal_places=2, null=True, default=0)
     balance = models.DecimalField(max_digits=9, decimal_places=2, blank=True, null=True)
+    balance_edited_at = models.DateTimeField(blank=True, null=True)
     used_at = models.DateTimeField(blank=True, null=True)
     is_blocked = models.BooleanField(default=False)
     def __str__(self):

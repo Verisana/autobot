@@ -42,7 +42,7 @@ class LocalBitcoin:
 
 #    Returns public user profile information
     def get_account_info(self, username):
-        return requests.get(self.base_url + '/api/account_info/' + username + '/')
+        return self.send_request('/api/account_info/' + username + '/', '', 'get')
 
 #    Private endpoints
 
@@ -58,6 +58,9 @@ class LocalBitcoin:
 
     def get_ad_info(self, ad_id):
         return self.send_request('/api/ad-get/' + str(ad_id) + '/', '', 'get')
+
+    def get_trade_attachment(self, trade, attachment_id):
+        return self.send_request('/api/contact_message_attachment/' + str(trade) + '/' + str(attachment_id) + '/', '', 'get')
 
 #    Return the information of the currently logged in user (the owner of authentication token).
     def get_myself(self):

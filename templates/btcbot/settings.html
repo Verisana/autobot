@@ -2,7 +2,7 @@
 {% load static %}
 
 
-{% block title %}Bot settings{% endblock %}
+{% block title %}Настройки бота{% endblock %}
 
 
 {% block nav_baractive_settings %}active{% endblock %}
@@ -10,7 +10,8 @@
 
 {% block content %}
     <div class="starter-template">
-        <h1 class="bold reddish"><b>Настройки бота по объявлениям</b></h1>
+
+        <h1 class="bold"><b>Настройки бота</b></h1>
 
         {% if messages %}
         <div class="alert alert-success" role="alert">
@@ -21,33 +22,61 @@
             </ul>
         </div>
         {% endif %}
-        <div class="container">
-            <br /><div class="row">
-                <div class="col border">id объявления</div>
-                <div class="col border">Имя</div>
-                <div class="col border">Работает</div>
-                <div class="col border">API ключи</div>
-                <div class="col border">Стоп цена</div>
-                <div class="col border">Шаг</div>
-                <div class="col border">Максимальный объем</div>
-                <div class="col border">Минимальный объем</div>
-                <div class="col border">Частота обновления</div>
-            </div>
-            {% for adbot in object_list %}
-            <div class="row">
-                <div class="col border">{{ adbot.ad_id }}</div>
-                <div class="col border">{{ adbot.name }}</div>
-		{% if adbot.switch %}
-                <div class="col border">Да</div>
-		{% else %}
-		<div class="col border">Нет</div>
-		{% endif %}
-                <div class="col border">{{ adbot.api_keys }}</div>
-                <div class="col border">{{ adbot.stop_price }}</div>
-                <div class="col border">{{ adbot.step }}</div>
-                <div class="col border">{{ adbot.volume_max }}</div>
-                <div class="col border">{{ adbot.volume_min }}</div>
-                <div class="col border">{{ adbot.frequency }}</div>
-            </div>
-	    {% endfor %}
+
+      <div class="container">
+      <table class="table table-bordered table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Вкл./Выкл. объявление</th>
+            <th scope="col">Целевая прибыль</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">
+                {% if bot.switch_bot_sell %}
+                    <form action="{% url 'btcbot:editor' %}" method="post">
+                        {% csrf_token %}
+                        <input type='hidden' name='bot_id' value='{{ bot.id }}' />
+                        <input type='hidden' name='editor' value='switch_bot_sell_ad' />
+                        <button class="btn btn-danger btn-sm" type="submit">Выключить объявление</button>
+                    </form>
+                {% else %}
+                    <form action="{% url 'btcbot:editor' %}" method="post">
+                        {% csrf_token %}
+                        <input type='hidden' name='bot_id' value='{{ bot.id }}' />
+                        <input type='hidden' name='editor' value='switch_bot_sell_ad' />
+                        <button class="btn btn-success btn-sm" type="submit">Включить объявление</button>
+                    </form>
+                {% endif %}
+            </th>
+            <td><b>{{ bot.target_profit }}</b>
+                <form action="{% url 'btcbot:editor' %}" method="post">
+                    {% csrf_token %}
+                    <input type='hidden' name='bot_id' value='{{ bot.id }}' />
+                    <input type='hidden' name='editor' value='change_target_profit' />
+                    <div class="input-group-append">
+                        <input type='text' name='target_profit' value='' />
+                        <button class="btn btn-info btn-sm" type="submit"><b>Сохранить</b></button>
+                    </div>
+                </form><br />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    <br/>
+  <main role="main" class="container">
+    <div class="jumbotron">
+        <h3>Активные кошельки для работы</h3>
+        {% if wallets %}
+            <p><b>{% for wallet in wallets %}{{ wallet.name }} ||| +{{ wallet.phone_number }}<br />{% endfor %}</b></p>
+        {% else %}
+            <p><b>Нет кошельков для работы. Свяжитесь с администратором</b></p>
+        {% endif %}
+    </div>
+  </main>
+    </div>
+  </div>
+
+
 {% endblock %}

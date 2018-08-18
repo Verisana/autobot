@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Сообщения по сделке {{ opentrade.id }}{% endblock %}
+
+
+{% block nav_baractive_index %}active{% endblock %}
+
+
+{% block content %}
+    <div class="starter-template">
+
+        <h1 class="bold"><b>Сообщения по сделке {{ opentrade.id }}</b></h1>
+
+        {% if messages %}
+        <div class="alert alert-success" role="alert">
+            <ul class="messages ">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+      <div class="container">
+      {% if not json_except %}
+      <table class="table table-bordered table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Дата</th>
+            <th scope="col">Отправитель</th>
+            <th scope="col">Был онлайн</th>
+            <th scope="col">Текст</th>
+          </tr>
+        </thead>
+        <tbody>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><form action="{% url 'btcbot:editor' %}" method="post">
+                    {% csrf_token %}
+                    <input type='hidden' name='opentrade_id' value='{{ pk }}' />
+                    <input type='hidden' name='editor' value='send_message' />
+                    <textarea rows="5" cols="80" name="message" required placeholder="Сообщение"></textarea>
+                    <button class="btn btn-info" type="submit"><b>Отправить</b></button>
+                </form><br /></td>
+            {% for trade_message in trade_messages %}
+            <tr>
+                <th scope="row" >{{ trade_message.created_at|date:"Y-m-d H:i:s e" }}</th>
+                <td>{% if trade_message.is_admin %}
+                        <p style="color: red"><b>Админ</b></p>
+                    {% else %}
+                        {% if trade_message.sender.username == 'DeluxObmen' %}
+                            <p><b>Robin</b></p>
+                        {% else %}
+                            {% if trade_message.is_verified %}
+                                <p style="color:darkblue"><b>Контрагент Верифицирован</b></p>
+                            {% else %}
+                                <p style="color:darkgreen"><b>Контрагент</b></p>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                </td>
+                <td>{{ trade_message.sender.last_online|date:"Y-m-d H:i:s e" }}</td>
+                <td>{{ trade_message.msg|linebreaksbr }}
+                    {% if trade_message.attachment_url %}
+                        <form action="{% url 'btcbot:editor' %}" method="post" target="_blank">
+                            {% csrf_token %}
+                            <input type='hidden' name='attachment_url' value='{{ trade_message.attachment_url }}' />
+                            <input type='hidden' name='editor' value='download_attachment' />
+                            <button class="btn btn-info btn-sm" type="submit">Прикреплено к сообщению</button>
+                        </form><br />
+                    {% endif %}
+                </td>
+            {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <h1>Ошибка! Необходимо перезагрузить страницу</h1>
+      {% endif %}
+      </div>
+    </div>
+
+{% endblock %}

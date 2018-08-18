@@ -71,6 +71,7 @@ class MeanBuyTrades(models.Model):
 class OpenTrades(models.Model):
     trade_id = models.IntegerField()
     contragent = models.CharField(max_length=128)
+    is_verified = models.BooleanField(default=False)
     amount_rub = models.DecimalField(max_digits=9,
                                      decimal_places=2)
     amount_btc = models.DecimalField(max_digits=10,
@@ -80,6 +81,7 @@ class OpenTrades(models.Model):
     api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE, blank=True, null=True)
     sent_first_message = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
+    who_marked_paid = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE, blank=True, null=True)
     sent_second_message = models.BooleanField(default=False)
     disputed = models.BooleanField(default=False)
     def __str__(self):

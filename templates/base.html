@@ -4,6 +4,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    {% block meta_block_add %}{% endblock %}
     <link rel="icon" href="{% static 'images/favicon.png' %}">
     <title>{% block title %}{% endblock %}</title>    
     <!-- Bootstrap core CSS -->
@@ -28,6 +29,9 @@
           <li class="nav-item {% block nav_baractive_settings %}{% endblock %}">
                 <a class="nav-link" href="{% url 'btcbot:settings' %}">Настройки</a>
           </li>
+          <li class="nav-item {% block nav_baractive_admin %}{% endblock %}">
+                <a class="nav-link" href="{% url 'admin:index' %}" target="_blank">Админка</a>
+          </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           {% if user.is_authenticated %}
@@ -45,7 +49,7 @@
         </ul>
       </div>
     </nav>
-    <main role="main" class="container">
+    <main role="main" class="container-fluid">
         {% block content %}{% endblock %}
     </main>
     <!-- Bootstrap core JavaScript

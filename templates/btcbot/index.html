@@ -2,7 +2,10 @@
 {% load static %}
 
 
-{% block title %}Состояние бота{% endblock %}
+{% block meta_block_add %}<meta http-equiv="refresh" content="5">{% endblock %}
+
+
+{% block title %}Открытые сделки{% endblock %}
 
 
 {% block nav_baractive_index %}active{% endblock %}
@@ -10,8 +13,8 @@
 
 {% block content %}
     <div class="starter-template">
-    
-        <h1 class="bold"><b>Состояние бота</b></h1>
+
+        <h1 class="bold"><b>Открытые сделки</b></h1>
 
         {% if messages %}
         <div class="alert alert-success" role="alert">
@@ -22,44 +25,75 @@
             </ul>
         </div>
         {% endif %}
-
-    <div class="container">
-      <div class="row">
-        {% for adbot_qs in adbot %} 
-        <div class="col-md-4">
-          <div class="card mb-4 box-shadow">
-            <div class="card-body">		  
-	      <h3>{{ adbot_qs.name }} <br />{{ adbot_qs.ad_id }}</h3>
-	      {% if adbot_qs.switch %}
-	      <form action="{% url 'ad_bot:switch' %}" method="post">
-		{% csrf_token %}
-		<input type='hidden' name='bot_id' value='{{ adbot_qs.id }}' />
-		<button class="btn btn-success" type="submit"><b>Бот работает</b></button>
-	      </form><br />
-              {% else %}
-	      <form action="{% url 'ad_bot:switch' %}" method="post">
-		{% csrf_token %}
-		<input type='hidden' name='bot_id' value='{{ adbot_qs.id }}' />
-		<button class="btn btn-danger" type="submit"><b>Бот не работает</b></button>
-	      </form><br />
-	      {% endif %}
-	      <p><b>{{ adbot_qs.get_payment_method_display }}</b> ||| <b>{{ adbot_qs.get_trade_direction_display }}</b></p>
-	      <p><b>{{ adbot_qs.frequency }}</b> ||| <b>{{ adbot_qs.stop_price }}</b> ||| <b>{{ adbot_qs.step }}</b> <br /> <b>MAX: {{ adbot_qs.volume_max }}</b> ||| <b>MIN: {{ adbot_qs.volume_min }}</b></p>
-	      {% comment %}
-	      <p>Совершенные действия</p>
-	      <div class="my-small">
-	        {% for actionlog in actionlist %}
-	      	  {% if adbot_qs.id == actionlog.bot_model.id %}  
-		  {{ actionlog.timestamp|date:"Y-m-d, G:i:s" }} <br /> {{ actionlog.action }} <br />
-		  {% endif %}
-	        {% endfor %}
-	      </div>
-	      {% endcomment %}
-	    </div>
-	  </div>
-	</div>
-        {% endfor %}
-      </div>
+      {% if opened_shift.start_working and opened_shift.end_working %}
+        <div class="container">
+            <form action="{% url 'btcbot:editor' %}" method="post">
+                {% csrf_token %}
+                <input type='hidden' name='editor' value='open_new_shift' />
+                <button class="btn btn-dark" type="submit" onclick="return confirm('Вы уверены?')"><b>Открыть смену</b></button>
+            </form><br />
+        </div>
+      {% else %}
+          <div class="container">
+              <form action="{% url 'btcbot:editor' %}" method="post">
+                {% csrf_token %}
+                <input type='hidden' name='shift_id' value='{{ opened_shift.id }}' />
+                <input type='hidden' name='editor' value='close_opened_shift' />
+                <button class="btn btn-dark" type="submit" onclick="return confirm('Вы уверены?')"><b>Закрыть смену</b></button>
+              </form><br />
+          </div>
+      {% endif %}
+      <table class="table table-bordered table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Номер сделки</th>
+            <th scope="col">Верифицирован?</th>
+            <th scope="col">Сумма руб.</th>
+            <th scope="col">Сумма BTC</th>
+            <th scope="col">Дата создания</th>
+            <th scope="col">Кошелек</th>
+            <th scope="col">Первое сообщение?</th>
+            <th scope="col">Оплачено?</th>
+            <th scope="col">Второе сообщение?</th>
+            <th scope="col">Оспаривается?</th>
+            <th scope="col">Чат</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for opentrade in opentrades_list %}
+            <tr>
+              <th scope="row">{{ opentrade.trade_id }}</th>
+                <td>{% if opentrade.is_verified %}<b>Да</b>{% else %}Нет{% endif %}</td>
+                <td>{{ opentrade.amount_rub|floatformat:2 }}</td>
+                <td>{{ opentrade.amount_btc|floatformat:8 }}</td>
+                <td>{{ opentrade.created_at }}</td>
+                <td>{{ opentrade.api_key_qiwi.name }}<br/>
+                    {% if opentrade.api_key_qiwi.is_blocked %}Заблокирован{% endif %}</td>
+                <td>{% if opentrade.sent_first_message %}Да {% else %} Нет {% endif %}</td>
+                <td>{% if opentrade.paid and not opentrade.disputed %}
+                        <form action="{% url 'btcbot:editor' %}" method="post">
+                            {% csrf_token %}
+                            <input type='hidden' name='opentrade_id' value='{{ opentrade.id }}' />
+                            <input type='hidden' name='editor' value='opentrade_paid' />
+                            <button class="btn btn-success" type="submit"><b>Да</b></button>
+                        </form><br />
+                    {% elif not opentrade.paid and not opentrade.disputed %}
+                        <form action="{% url 'btcbot:editor' %}" method="post">
+                            {% csrf_token %}
+                            <input type='hidden' name='opentrade_id' value='{{ opentrade.id }}' />
+                            <input type='hidden' name='editor' value='opentrade_paid' />
+                            <button class="btn btn-danger" onclick="return confirm('Вы уверены, что деньги пришли?')" type="submit"><b>Нет</b></button>
+                        </form><br />
+                    {% else %}
+                        Оспаривается <br/> Битки нельзя отпустить
+                    {% endif %}</td>
+                <td>{% if opentrade.sent_second_message %}Да {% else %} Нет {% endif %}</td>
+                <td>{% if opentrade.disputed %}Да {% else %} Нет {% endif %}</td>
+                <td><button class="btn btn-info" type="button"><b><a style="color: white;" href="{% url 'btcbot:message' opentrade.id %}" target="_blank">Открыть чат</a></b></button></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+      </table>
     </div>
 
 {% endblock %}

@@ -1,4 +1,5 @@
 from decimal import *
+import dateutil
 from django.utils import timezone
 from btcbot.trader.local_api import LocalBitcoin
 from btcbot.trader.ad_bot import AdUpdateBot
@@ -58,6 +59,13 @@ class LocalSellerBot():
 
     def _get_messages_of_trade(self, trade_id):
         response = self.lbtc.get_contact_messages(str(trade_id))
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return response
+
+    def _get_account_info(self, username):
+        response = self.lbtc.get_account_info(username)
         if response.status_code == 200:
             return response.json()
         else:
@@ -171,6 +179,16 @@ class LocalSellerBot():
                 return True
         return False
 
+    def _is_verified(self, username):
+        user_info = self._get_account_info(str(username))
+        if isinstance(user_info, dict):
+            if not user_info['data']['identity_verified_at']:
+                return False
+            else:
+                return True
+        else:
+            return True
+
     def send_first_message(self, trade_obj):
         message = self.bot.greetings_text.format(trade_obj.api_key_qiwi.phone_number)
         response = self.lbtc.post_message_to_contact(str(trade_obj.trade_id), message)
@@ -197,11 +215,11 @@ class LocalSellerBot():
         else:
             return False
 
-    def make_new_deal(self, my_trade, disputed=False, qiwi_blocked=False):
+    def make_new_deal(self, my_trade):
         local_trade = self._get_specific_trade(my_trade.trade_id)
         if local_trade == None:
             return False
-
+        disputed = False
         rate_rub = Decimal(local_trade['data']['amount']) / (
                     Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         buy_rate = self.ad_upd._find_mean_buy_price()
@@ -213,6 +231,18 @@ class LocalSellerBot():
             profit_rub_trade = (1 - (rate_rub / buy_rate)) * Decimal(local_trade['data']['amount'])
             profit_rub_trade *= -1
             profit_rub_full = buy_rate - rate_rub
+
+        if local_trade['data']['disputed_at']:
+            disputed = True
+
+        if my_trade.who_marked_paid:
+            if local_trade['data']['payment_completed_at']:
+                marked = dateutil.parser.parse(local_trade['data']['payment_completed_at']).astimezone()
+            else:
+                marked = my_trade.created_at.astimezone()
+            time = timezone.now().astimezone() - marked
+        else:
+            time = None
 
         ReleasedTradesInfo.objects.create(ad_id=local_trade['data']['contact_id'],
                                           trade_type=local_trade['data']['advertisement']['trade_type'],
@@ -229,8 +259,10 @@ class LocalSellerBot():
                                           profit_rub_trade=profit_rub_trade,
                                           profit_rub_full=profit_rub_full,
                                           api_key_qiwi=my_trade.api_key_qiwi,
-                                          is_qiwi_blocked=qiwi_blocked,
-                                          disputed=disputed)
+                                          is_qiwi_blocked=my_trade.api_key_qiwi.is_blocked,
+                                          disputed=disputed,
+                                          who_released_btc=my_trade.who_marked_paid,
+                                          deal_processed_time=time)
         if local_trade['data']['released_at']:
             self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
         my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
@@ -254,24 +286,26 @@ class LocalSellerBot():
                 if i['data']['disputed_at'] and not self._is_trade_processed(contact_id):
                     reference_text = self.reference_text.format(i['data']['reference_code'])
                     OpenTrades.objects.create(trade_id=contact_id,
-                                              contragent=i['data']['buyer']['username'],
+                                              contragent=i['data']['buyer']['name'],
                                               amount_rub=i['data']['amount'],
                                               amount_btc=i['data']['amount_btc'],
                                               created_at=timezone.now().astimezone(),
                                               reference_text=reference_text,
-                                              disputed=True)
+                                              disputed=True,
+                                              is_verified=self._is_verified(i['data']['buyer']['username']))
                     continue
 
                 if not i['data']['disputed_at'] and not self._is_trade_processed(contact_id) and ad_id == self.bot.sell_ad_settings.ad_id:
                     reference_text = self.reference_text.format(i['data']['reference_code'])
                     qiwi = self._get_appropriate_qiwi(i['data']['amount'])
                     new_trade = OpenTrades.objects.create(trade_id=contact_id,
-                                                          contragent=i['data']['buyer']['username'],
+                                                          contragent=i['data']['buyer']['name'],
                                                           amount_rub=i['data']['amount'],
                                                           amount_btc=i['data']['amount_btc'],
                                                           created_at=timezone.now().astimezone(),
                                                           reference_text=reference_text,
-                                                          api_key_qiwi=qiwi)
+                                                          api_key_qiwi=qiwi,
+                                                          is_verified=self._is_verified(i['data']['buyer']['username']))
                     self.send_first_message(new_trade)
                     for notification in self.all_notifications['data']:
                         if notification['contact_id'] == contact_id:

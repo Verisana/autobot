@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Кошельки{% endblock %}
+
+
+{% block nav_baractive_wallets %}active{% endblock %}
+
+
+{% block content %}
+    <div class="starter-template">
+
+        <h1 class="bold"><b>Кошельки</b></h1>
+
+        {% if messages %}
+        <div class="alert alert-success" role="alert">
+            <ul class="messages ">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+      <div class="container">
+      <table class="table table-bordered table-striped table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Имя</th>
+            <th scope="col">Добавлен</th>
+            <th scope="col">Остаток по лимитам</th>
+            <th scope="col">Баланс</th>
+            <th scope="col">Использован</th>
+            <th scope="col">Заблокирован?</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for apikeyqiwi in apikeyqiwi_list %}
+          <tr>
+            <th scope="row">{{ apikeyqiwi.name }}</th>
+            <td>{{ apikeyqiwi.created_at }}</td>
+            <td>{{ apikeyqiwi.limit_left|floatformat:2 }} руб.</td>
+            <td>{{ apikeyqiwi.balance }} руб.
+                <form action="{% url 'profiles:editor' %}" method="post">
+                    {% csrf_token %}
+                    <input type='hidden' name='qiwi_id' value='{{ apikeyqiwi.id }}' />
+                    <input type='hidden' name='editor' value='qiwi_wallet_balance' />
+                    <br /><div class="input-group-append">
+                        <input type='text' name='qiwi_balance' value='' />
+                        <button class="btn btn-info btn-sm" type="submit"><b>Сохранить</b></button>
+                    </div>
+                </form><br /></td>
+            <td>{{ apikeyqiwi.used_at }}</td>
+            <td>{% if apikeyqiwi.is_blocked %}
+                    <form action="{% url 'profiles:editor' %}" method="post">
+                        {% csrf_token %}
+                        <input type='hidden' name='qiwi_id' value='{{ apikeyqiwi.id }}' />
+                        <input type='hidden' name='editor' value='qiwi_wallet_blocked' />
+                        <button class="btn btn-success" type="submit"><b>Да</b></button>
+                    </form><br />
+                    {% else %}
+                    <form action="{% url 'profiles:editor' %}" method="post">
+                        {% csrf_token %}
+                        <input type='hidden' name='qiwi_id' value='{{ apikeyqiwi.id }}' />
+                        <input type='hidden' name='editor' value='qiwi_wallet_blocked' />
+                        <button class="btn btn-danger" type="submit"><b>Нет</b></button>
+                    </form><br />
+                {% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+
+{% endblock %}

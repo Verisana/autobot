@@ -5,6 +5,7 @@ from btcbot.trader.local_api import LocalBitcoin
 from btcbot.tasks import seller_bot_handler
 from profiles.models import APIKeyQiwi, TelegramBotSettings
 from profiles.tasks import qiwi_limit_resetter
+from info_data.models import ReleasedTradesInfo, OperatorsWorkingShift
 import telegram
 from btcbot.qiwi_api import pyqiwi
 from btcbot.qiwi_api.pyqiwi.exceptions import APIError
