@@ -29,7 +29,8 @@
           <tr>
             <th scope="col">Имя</th>
             <th scope="col">Добавлен</th>
-            <th scope="col">Остаток по лимитам</th>
+            <th scope="col">Остаток по макс. лимиту</th>
+            <th scope="col">Остаток по сменн. лимиту</th>
             <th scope="col">Баланс</th>
             <th scope="col">Использован</th>
             <th scope="col">Заблокирован?</th>
@@ -40,6 +41,7 @@
           <tr>
             <th scope="row">{{ apikeyqiwi.name }}</th>
             <td>{{ apikeyqiwi.created_at }}</td>
+            <td>{{ apikeyqiwi.limit_left|floatformat:2 }} руб.</td>
             <td>{{ apikeyqiwi.limit_left|floatformat:2 }} руб.</td>
             <td>{{ apikeyqiwi.balance }} руб.
                 <form action="{% url 'profiles:editor' %}" method="post">

@@ -84,7 +84,7 @@ def seller_bot_handler():
                 trade.api_key_qiwi.save()
             if trade.disputed:
                 if trade.disputed and trade.paid and trade.sent_second_message:
-                    seller.make_new_deal(trade, disputed=trade.disputed)
+                    seller.make_new_deal(trade)
                     trade.delete()
                     continue
                 else:
