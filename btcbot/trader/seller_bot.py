@@ -336,7 +336,7 @@ class LocalSellerBot():
 
         if my_trade.marked_paid:
             if self._release_btc(my_trade):
-                my_trade.marked_paid = True
+                my_trade.paid = True
                 my_trade.save()
             self.make_new_deal(my_trade)
             if not my_trade.sent_second_message:

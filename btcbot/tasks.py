@@ -60,7 +60,8 @@ def ad_bot_runner():
             if not active['buy_ad_bot_execution@ubuntu']:
                 buy_ad_bot_execution.delay(random.sample([1, 2], 1))
 
-    if bot_settings.switch_bot_sell:
+    trades = OpenTrades.objects.filter(disputed=False)
+    if bot_settings.switch_bot_sell or trades:
         if 'seller_bot_handler@ubuntu' in active.keys() and 'seller_bot_handler@ubuntu' in scheduled.keys() \
                 and 'seller_bot_handler@ubuntu' in reserved.keys():
             if not active['seller_bot_handler@ubuntu'] and not scheduled['seller_bot_handler@ubuntu'] \
@@ -103,6 +104,6 @@ def seller_bot_handler():
                     trade.delete()
             elif trade.sent_first_message and trade.paid and trade.sent_second_message and not bot.switch_rev_send_sell:
                 trade.delete()
-
-    if bot.switch_bot_sell:
+    trades_no_dispute = OpenTrades.objects.filter(disputed=False)
+    if bot.switch_bot_sell or trades_no_dispute:
         seller_bot_handler.apply_async(countdown=15)
