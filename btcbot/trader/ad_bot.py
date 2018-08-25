@@ -175,10 +175,3 @@ class AdUpdateBot():
                 self._update_price(1+isfirst['compensate'])
             else:
                 self._update_price(isfirst['rival'])
-        else:
-            if self.sell_direction and not self.bot.switch_bot_sell:
-                self.bot.switch_sell_ad_upd = False
-                self.bot.save(update_fields=['switch_sell_ad_upd'])
-            elif not self.sell_direction and not self.bot.switch_bot_buy:
-                self.bot.switch_buy_ad_upd = False
-                self.bot.save(update_fields=['switch_buy_ad_upd'])

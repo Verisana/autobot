@@ -89,7 +89,12 @@
                     {% endif %}</td>
                 <td>{% if opentrade.sent_second_message %}Да {% else %} Нет {% endif %}</td>
                 <td>{% if opentrade.disputed %}Да {% else %} Нет {% endif %}</td>
-                <td><button class="btn btn-info" type="button"><b><a style="color: white;" href="{% url 'btcbot:message' opentrade.id %}" target="_blank">Открыть чат</a></b></button></td>
+                <td>{% if not opentrade.disputed %}
+                        <button class="btn btn-info" type="button"><b><a style="color: white;" href="{% url 'btcbot:message' opentrade.id %}" target="_blank">Открыть чат</a></b></button>
+                    {% else %}
+                        <p>Сделка оспаривается. Сообщения недоступны</p>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>

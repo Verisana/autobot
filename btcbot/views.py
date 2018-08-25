@@ -110,10 +110,10 @@ class EditorView(LoginRequiredMixin, generic.View):
 
     def _change_opentrade_paid(self, opentrade_id, operator):
         trade = OpenTrades.objects.get(id=opentrade_id)
-        if trade.paid:
-            trade.paid = False
+        if trade.marked_paid:
+            trade.marked_paid = False
         else:
-            trade.paid = True
+            trade.marked_paid = True
             trade.who_marked_paid = operator
         trade.save()
 
