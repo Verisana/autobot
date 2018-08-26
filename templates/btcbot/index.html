@@ -53,7 +53,8 @@
             <th scope="col">Дата создания</th>
             <th scope="col">Кошелек</th>
             <th scope="col">Первое сообщение?</th>
-            <th scope="col">Оплачено?</th>
+            <th scope="col">Пометка об оплате?</th>
+            <th scope="col">Деньги пришли?</th>
             <th scope="col">Второе сообщение?</th>
             <th scope="col">Оспаривается?</th>
             <th scope="col">Чат</th>
@@ -70,14 +71,15 @@
                 <td>{{ opentrade.api_key_qiwi.name }}<br/>
                     {% if opentrade.api_key_qiwi.is_blocked %}Заблокирован{% endif %}</td>
                 <td>{% if opentrade.sent_first_message %}Да {% else %} Нет {% endif %}</td>
-                <td>{% if opentrade.paid and not opentrade.disputed %}
+                <td>{% if opentrade.sent_qiwi %}Да {% else %} Нет {% endif %}</td>
+                <td>{% if opentrade.marked_paid and not opentrade.disputed %}
                         <form action="{% url 'btcbot:editor' %}" method="post">
                             {% csrf_token %}
                             <input type='hidden' name='opentrade_id' value='{{ opentrade.id }}' />
                             <input type='hidden' name='editor' value='opentrade_paid' />
                             <button class="btn btn-success" type="submit"><b>Да</b></button>
                         </form><br />
-                    {% elif not opentrade.paid and not opentrade.disputed %}
+                    {% elif not opentrade.marked_paid and not opentrade.disputed %}
                         <form action="{% url 'btcbot:editor' %}" method="post">
                             {% csrf_token %}
                             <input type='hidden' name='opentrade_id' value='{{ opentrade.id }}' />

@@ -341,6 +341,10 @@ class LocalSellerBot():
             my_trade.save()
             return None
 
+        if local_trade['data']['payment_completed_at']:
+            my_trade.sent_qiwi = True
+            my_trade.save()
+
         if my_trade.marked_paid:
             if self._release_btc(my_trade):
                 my_trade.paid = True

@@ -80,6 +80,7 @@ class OpenTrades(models.Model):
     reference_text = models.CharField(max_length=256)
     api_key_qiwi = models.ForeignKey('profiles.APIKeyQiwi', on_delete=models.CASCADE, blank=True, null=True)
     sent_first_message = models.BooleanField(default=False)
+    sent_qiwi = models.BooleanField(default=False)
     marked_paid = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     who_marked_paid = models.ForeignKey('profiles.Profile', on_delete=models.CASCADE, blank=True, null=True)
