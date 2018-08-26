@@ -36,6 +36,7 @@ class MessageView(LoginRequiredMixin, generic.TemplateView):
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
         trade = OpenTrades.objects.get(id=int(context['pk']))
+        context['amount_rub'] = trade.amount_rub
         bot = BotSetting.objects.get(name='Bot_QIWI')
         lbtc = LocalBitcoin(bot.sell_ad_settings.api_key.api_key, bot.sell_ad_settings.api_key.api_secret)
         messages = lbtc.get_contact_messages(str(trade.trade_id))

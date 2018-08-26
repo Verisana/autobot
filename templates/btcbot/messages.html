@@ -36,7 +36,7 @@
         </thead>
         <tbody>
             <td></td>
-            <td></td>
+            <td><b>Сумма сделки:<br/><br/>  <p style="color: darkred;">{{ amount_rub }} руб.</p></b></td>
             <td></td>
             <td><form action="{% url 'btcbot:editor' %}" method="post">
                     {% csrf_token %}
