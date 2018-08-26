@@ -72,9 +72,9 @@
                     {% if opentrade.api_key_qiwi.is_blocked %}Заблокирован{% endif %}</td>
                 <td>{% if opentrade.sent_first_message %}Да {% else %} Нет {% endif %}</td>
                 <td>{% if opentrade.sent_qiwi %}
-                        <button type="button" class="btn btn-warning">Да</button>
+                    <button type="button" class="btn btn-warning"><b>Типа оплачено</b></button>
                     {% else %}
-                        Нет
+                        Не оплачено
                     {% endif %}
                 </td>
                 <td>{% if opentrade.marked_paid and not opentrade.disputed %}
