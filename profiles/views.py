@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from .models import APIKeyQiwi
+from btcbot.models import BotSetting
 
 
 class WalletsView(LoginRequiredMixin, generic.ListView):
@@ -28,6 +29,8 @@ class EditorView(LoginRequiredMixin, generic.View):
         elif request.POST.get('editor') == 'qiwi_wallet_balance':
             balance = Decimal(request.POST.get('qiwi_balance'))
             self._change_qiwi_balance(qiwi_id, balance)
+        elif request.POST.get('editor') == 'limit_resetter':
+            self._limit_resetter(qiwi_id)
         return redirect('profiles:wallets')
 
     def _change_qiwi_blocked(self, qiwi_id):
@@ -43,4 +46,10 @@ class EditorView(LoginRequiredMixin, generic.View):
         qiwi = APIKeyQiwi.objects.get(id=qiwi_id)
         qiwi.balance = balance
         qiwi.balance_edited_at = timezone.now().astimezone()
+        qiwi.save()
+
+    def _limit_resetter(self, qiwi_id):
+        bot = BotSetting.objects.get(name='Bot_QIWI')
+        qiwi = APIKeyQiwi.objects.get(id=qiwi_id)
+        qiwi.limit_left = bot.qiwi_limit
         qiwi.save()

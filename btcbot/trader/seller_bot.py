@@ -77,9 +77,14 @@ class LocalSellerBot():
             for qiwi in qiwi_list:
                 balance = qiwi.limit_left - Decimal(deal_price)
                 if balance > 0:
-                    qiwi.used_at = timezone.now().astimezone()
+                    qiwi.limit_left = balance
                     qiwi.save()
                     return qiwi
+                else:
+                    qiwi.used_at = timezone.now().astimezone()
+                    qiwi.limit_left = self.bot.qiwi_limit
+                    qiwi.save()
+
             message = 'Дневные лимиты по киви кошелькам сожжены. Продажа остановлена.'
             self.telegram_bot.send_message(self.bot.telegram_bot_settings.chat_emerg, message)
             self.bot.switch_bot_sell = False
@@ -265,7 +270,7 @@ class LocalSellerBot():
                                           deal_processed_time=time)
         if local_trade['data']['released_at']:
             self._reduce_buy_leftover(Decimal(local_trade['data']['amount_btc']) + Decimal(local_trade['data']['fee_btc']))
-        my_trade.api_key_qiwi.limit_left -= Decimal(local_trade['data']['amount'])
+        my_trade.api_key_qiwi.balance += Decimal(local_trade['data']['amount'])
         my_trade.api_key_qiwi.save()
 
     def check_new_trades(self):
@@ -326,6 +331,8 @@ class LocalSellerBot():
         if local_trade == None:
             return None
         if local_trade['data']['canceled_at'] or (local_trade['data']['closed_at'] and not local_trade['data']['released_at']):
+            my_trade.api_key_qiwi.limit_left += Decimal(local_trade['data']['amount'])
+            my_trade.api_key_qiwi.save()
             return True
         if local_trade['data']['disputed_at']:
             message = 'По сделке №{0} открыт диспут {1}'.format(my_trade.trade_id, local_trade['data']['disputed_at'])
