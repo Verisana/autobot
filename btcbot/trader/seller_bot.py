@@ -214,7 +214,8 @@ class LocalSellerBot():
             return False
 
     def leave_review(self, trade_obj):
-        response = self.lbtc.post_feedback_to_user(trade_obj.contragent, feedback='trust', message=self.bot.review_text)
+        contragent = trade_obj.contragent.split(' ', 1)[0]
+        response = self.lbtc.post_feedback_to_user(contragent, feedback='trust', message=self.bot.review_text)
         if response.status_code == 200:
             return True
         else:
