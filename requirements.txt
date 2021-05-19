@@ -10,7 +10,7 @@ psycopg2-binary==2.7.5
 python-dateutil==2.7.3
 numpy==1.15.0rc1
 pandas==0.23.1
-lxml==4.2.3
+lxml==4.6.3
 python-telegram-bot==10.1.0
 pysocks==1.6.8
 requests-futures==0.9.7
