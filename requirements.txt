@@ -1,4 +1,4 @@
-Django==2.1b1
+Django==2.2.20
 ipython==6.4.0
 remote-pdb==1.2.0
 requests==2.19.1
